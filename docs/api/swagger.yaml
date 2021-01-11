@@ -14,13 +14,15 @@ info:
 #host: "petstore.swagger.io"
 #basePath: "/v2"
 tags:
+- name: "authentication"
+  description: "Operations regarding Authentication."
 - name: "did"
   description: "Operations regarding DIDs."
   externalDocs:
     description: "Find out more"
     url: "http://swagger.io"
-- name: "did_document"
-  description: "Operations regarding DID Documents."
+#- name: "did_document"
+#  description: "Operations regarding DID Documents."
 - name: "credential"
   description: "Operations regarding Verifiable Credentials."
 - name: "proof_request"
@@ -32,6 +34,40 @@ schemes:
 - "https"
 - "http"
 paths:
+  /authentication/authenticate:
+    post:
+      tags:
+      - "authentication"
+      summary: "Authenticate Stakeholder"
+      description: ""
+      #operationId: "uploadFile"
+      consumes:
+      - "multipart/form-data"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "id_token"
+      #  in: "path"
+        description: "id_token"
+        required: true
+        type: "string"
+  /authentication/refresh:
+    put:
+      tags:
+      - "authentication"
+      summary: "Refresh Token"
+      description: ""
+      #operationId: "uploadFile"
+      consumes:
+      - "multipart/form-data"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "id_token"
+      #  in: "path"
+        description: "id_token"
+        required: true
+        type: "string"
   /dids/create:
     post:
       tags:
@@ -80,6 +116,22 @@ paths:
       #- petstore_auth:
       #  - "write:pets"
       #  - "read:pets"
+  /dids/readStatus:
+    get:
+      tags:
+      - "did"
+      summary: "Read DID Status"
+      description: ""
+      #operationId: "uploadFile"
+      #consumes:
+      #- "multipart/form-data"
+      #produces:
+      #- "application/json"
+      responses:
+        200:
+          description: "Successful operation"
+          schema:
+            $ref: "#/definitions/ApiResponse"
   /dids/read:
     get:
       tags:
@@ -96,11 +148,11 @@ paths:
           description: "Successful operation"
           schema:
             $ref: "#/definitions/ApiResponse"
-  /dids/register:
-    post:
+  /dids/remove:
+    delete:
       tags:
       - "did"
-      summary: "Register DID"
+      summary: "Remove DID"
       description: ""
       #operationId: "uploadFile"
       consumes:
@@ -124,43 +176,33 @@ paths:
           description: "Successful operation"
           schema:
             $ref: "#/definitions/ApiResponse"
-  /did_documents/create:
-    post:
-      tags:
-      - "did_document"
-      summary: "Create DID Document"
-      description: ""
-      #operationId: "uploadFile"
-      #consumes:
-      #- "multipart/form-data"
-      produces:
-      - "application/json"
-      responses:
-        200:
-          description: "Successful operation"
-          schema:
-            $ref: "#/definitions/ApiResponse"
-  /did_documents/read:
-    get:
-      tags:
-      - "did_document"
-      summary: "Read DID Document"
-      description: ""
-      #operationId: "uploadFile"
-      #consumes:
-      #- "multipart/form-data"
-      produces:
-      - "application/json"
-      responses:
-        200:
-          description: "Successful operation"
-          schema:
-            $ref: "#/definitions/ApiResponse"
-  /did_documents/update:
+  /dids/update:
     put:
       tags:
-      - "did_document"
-      summary: "Update DID Document"
+      - "did"
+      summary: "Update DID"
+      description: ""
+      #operationId: "uploadFile"
+      consumes:
+      - "multipart/form-data"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "did"
+      #  in: "path"
+        description: "DID"
+        required: true
+        type: "string"
+      responses:
+        200:
+          description: "Successful operation"
+          schema:
+            $ref: "#/definitions/ApiResponse"
+  /did/get_invitation:
+    get:
+      tags:
+      - "did"
+      summary: "Get Invitation"
       description: ""
       #operationId: "uploadFile"
       #consumes:
@@ -172,11 +214,75 @@ paths:
           description: "Successful operation"
           schema:
             $ref: "#/definitions/ApiResponse"
+  /did/revoke_credential:
+    post:
+      tags:
+      - "did"
+      summary: "Revoke Credential"
+      description: ""
+      #operationId: "uploadFile"
+      #consumes:
+      #- "multipart/form-data"
+      produces:
+      - "application/json"
+      responses:
+        200:
+          description: "Successful operation"
+          schema:
+            $ref: "#/definitions/ApiResponse"
+  #/did_documents/read:
+  #  get:
+  #    tags:
+  #    - "did_document"
+  #    summary: "Read DID Document"
+  #    description: ""
+      #operationId: "uploadFile"
+      #consumes:
+      #- "multipart/form-data"
+  #    produces:
+  #    - "application/json"
+  #    responses:
+  #      200:
+  #        description: "Successful operation"
+  #        schema:
+  #          $ref: "#/definitions/ApiResponse"
+  #/did_documents/update:
+  #  put:
+  #    tags:
+  #    - "did_document"
+  #    summary: "Update DID Document"
+  #    description: ""
+      #operationId: "uploadFile"
+      #consumes:
+      #- "multipart/form-data"
+  #    produces:
+  #    - "application/json"
+  #    responses:
+  #      200:
+  #        description: "Successful operation"
+  #        schema:
+  #          $ref: "#/definitions/ApiResponse"
   /credentials/issue:
     post:
       tags:
       - "credential"
       summary: "Issue Verifiable Credential"
+      description: ""
+      #operationId: "uploadFile"
+      #consumes:
+      #- "multipart/form-data"
+      produces:
+      - "application/json"
+      responses:
+        200:
+          description: "Successful operation"
+          schema:
+            $ref: "#/definitions/ApiResponse"
+  /credentials/decline:
+    post:
+      tags:
+      - "credential"
+      summary: "Decline Verifiable Credential"
       description: ""
       #operationId: "uploadFile"
       #consumes:
@@ -220,6 +326,38 @@ paths:
           description: "Successful operation"
           schema:
             $ref: "#/definitions/ApiResponse"
+  /credentials/read/declined:
+    get:
+      tags:
+      - "credential"
+      summary: "Read declined Verifiable Credential"
+      description: ""
+      #operationId: "uploadFile"
+      #consumes:
+      #- "multipart/form-data"
+      produces:
+      - "application/json"
+      responses:
+        200:
+          description: "Successful operation"
+          schema:
+            $ref: "#/definitions/ApiResponse"
+  /credentials/read/declined/all:
+    get:
+      tags:
+      - "credential"
+      summary: "Read all declined Verifiable Credentials"
+      description: ""
+      #operationId: "uploadFile"
+      #consumes:
+      #- "multipart/form-data"
+      produces:
+      - "application/json"
+      responses:
+        200:
+          description: "Successful operation"
+          schema:
+            $ref: "#/definitions/ApiResponse"
   /credentials/revoke:
     put:
       tags:
@@ -236,7 +374,7 @@ paths:
           description: "Successful operation"
           schema:
             $ref: "#/definitions/ApiResponse"
-  /credentials/read/revoke:
+  /credentials/revoke/read:
     get:
       tags:
       - "credential"
@@ -252,22 +390,22 @@ paths:
           description: "Successful operation"
           schema:
             $ref: "#/definitions/ApiResponse"
-  /credentials/remove:
-    delete:
-      tags:
-      - "credential"
-      summary: "Remove Verifiable Credential"
-      description: ""
+  #/credentials/remove:
+  #  delete:
+  #    tags:
+  #    - "credential"
+  #    summary: "Remove Verifiable Credential"
+  #    description: ""
       #operationId: "uploadFile"
       #consumes:
       #- "multipart/form-data"
-      produces:
-      - "application/json"
-      responses:
-        200:
-          description: "Successful operation"
-          schema:
-            $ref: "#/definitions/ApiResponse"
+  #    produces:
+  #    - "application/json"
+  #    responses:
+  #      200:
+  #        description: "Successful operation"
+  #        schema:
+  #          $ref: "#/definitions/ApiResponse"
   /proof_requests/create:
     post:
       tags:
@@ -284,43 +422,11 @@ paths:
           description: "Successful operation"
           schema:
             $ref: "#/definitions/ApiResponse"
-  /proof_requests/read:
-    get:
-      tags:
-      - "proof_request"
-      summary: "Read Proof Request"
-      description: ""
-      #operationId: "uploadFile"
-      #consumes:
-      #- "multipart/form-data"
-      produces:
-      - "application/json"
-      responses:
-        200:
-          description: "Successful operation"
-          schema:
-            $ref: "#/definitions/ApiResponse"
-  /proof_requests/read/credential:
-    get:
-      tags:
-      - "proof_request"
-      summary: "Read Proof Request"
-      description: ""
-      #operationId: "uploadFile"
-      #consumes:
-      #- "multipart/form-data"
-      produces:
-      - "application/json"
-      responses:
-        200:
-          description: "Successful operation"
-          schema:
-            $ref: "#/definitions/ApiResponse"
-  /proof_requests/present_proof/send:
+  /proof_requests/read/status:
     post:
       tags:
       - "proof_request"
-      summary: "Present a proof to send to the Administrator"
+      summary: "Read Proof Request Status"
       description: ""
       #operationId: "uploadFile"
       #consumes:
@@ -332,11 +438,43 @@ paths:
           description: "Successful operation"
           schema:
             $ref: "#/definitions/ApiResponse"
-  /proof_requests/present_proof/verify:
-    post:
+  #/proof_requests/read:
+  #  get:
+  #    tags:
+  #    - "proof_request"
+  #    summary: "Read Proof Request"
+  #    description: ""
+      #operationId: "uploadFile"
+      #consumes:
+      #- "multipart/form-data"
+  #    produces:
+  #    - "application/json"
+  #    responses:
+  #      200:
+  #        description: "Successful operation"
+  #        schema:
+  #          $ref: "#/definitions/ApiResponse"
+  #/proof_requests/read/credential:
+  #  get:
+  #    tags:
+  #    - "proof_request"
+  #    summary: "Read Proof Request"
+  #    description: ""
+      #operationId: "uploadFile"
+      #consumes:
+      #- "multipart/form-data"
+  #    produces:
+  #    - "application/json"
+  #    responses:
+  #      200:
+  #        description: "Successful operation"
+  #        schema:
+  #          $ref: "#/definitions/ApiResponse"
+  /proof_requests/read/presentation:
+    get:
       tags:
       - "proof_request"
-      summary: "Verify Presented Proof from Provider"
+      summary: "Read Proof Request Presentation"
       description: ""
       #operationId: "uploadFile"
       #consumes:
@@ -347,7 +485,39 @@ paths:
         200:
           description: "Successful operation"
           schema:
-            $ref: "#/definitions/ApiResponse" 
+            $ref: "#/definitions/ApiResponse"
+  #/proof_requests/present_proof/send:
+  #  post:
+  #    tags:
+  #    - "proof_request"
+  #    summary: "Present a proof to send to the Administrator"
+  #    description: ""
+      #operationId: "uploadFile"
+      #consumes:
+      #- "multipart/form-data"
+  #    produces:
+  #    - "application/json"
+  #    responses:
+  #      200:
+  #        description: "Successful operation"
+  #        schema:
+  #          $ref: "#/definitions/ApiResponse"
+  #/proof_requests/present_proof/verify:
+  #  post:
+  #    tags:
+  #    - "proof_request"
+  #    summary: "Verify Presented Proof from Provider"
+  #    description: ""
+      #operationId: "uploadFile"
+      #consumes:
+      #- "multipart/form-data"
+  #    produces:
+  #    - "application/json"
+  #    responses:
+  #      200:
+  #        description: "Successful operation"
+  #        schema:
+  #          $ref: "#/definitions/ApiResponse" 
 securityDefinitions:
   api_key:
     type: "apiKey"
