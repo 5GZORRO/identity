@@ -1,0 +1,14 @@
+[
+    {
+        "name": "did",
+        "description": "Operations regarding DIDs."
+    },
+    {
+        "name": "credential",
+        "description": "Operations regarding Verifiable Credentials."   
+    },
+    {
+        "name": "proof_request",
+        "description": "Operations regarding Proof Requests."   
+    }
+]

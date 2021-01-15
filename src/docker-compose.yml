@@ -1,0 +1,49 @@
+version: '3'
+services: 
+    admin_agent:
+        build: ../src/Admin_Agent
+        container_name: admin_agent
+        #networks:
+        #    front:
+        #        ipv4_address: 172.220.18.0
+        command: uvicorn app.main:app --reload --workers 1 --host 0.0.0.0 --port 8000
+        ports:
+            - "6200:8000"
+        restart: always
+        env_file:
+            - ../src/.env
+    
+    regulator_agent:
+        build: ../src/Regulator_Agent
+        container_name: regulator_agent
+        command: uvicorn app.main:app --reload --workers 1 --host 0.0.0.0 --port 8000
+        ports:
+            - "6400:8000"
+        restart: always
+        env_file:
+            - ../src/.env
+
+    #trading_consumer_agent:
+    #    build: ../src/Trading_Consumer_Agent
+    #    container_name: trading_consumer_agent
+    #    command: uvicorn app.main:app --reload --workers 1 --host 0.0.0.0 --port 8000
+    #    ports:
+    #        - "6600:8000"
+    #    restart: always
+    #    env_file:
+    #        - ../src/.env
+    
+    #trading_provider_agent:
+    #    build: ../src/Trading_Provider_Agent
+    #    container_name: trading_provider_agent
+    #    command: uvicorn app.main:app --reload --workers 1 --host 0.0.0.0 --port 8000
+    #    ports:
+    #        - "6800:8000"
+    #    restart: always
+    #    env_file:
+    #        - ../src/.env
+        
+#networks:
+#  front:
+#    external:
+#      name: multi-host-network
