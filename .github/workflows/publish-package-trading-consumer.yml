@@ -1,0 +1,42 @@
+name: publish-package-trading-consumer-agent
+on: workflow_dispatch
+env:
+  #REPOSITORY_NAME: identity
+  REPOSITORY_NAME_LC: identity
+
+  IMAGE_NAME: 5g-zorro-trading-consumer-agent  
+jobs:
+  publish_package: 
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2 
+      # read version from VERSION file
+      - name: Read VERSION file
+        id: getversion
+        run: echo "::set-output name=version::$(cat VERSION)"
+      # build docker image
+      - name: Build image
+        run: sudo docker build -t ${{ env.IMAGE_NAME }} ./src/Trading_Consumer_Agent      
+      # delete old package version
+      - uses: actions/delete-package-versions@v1
+        continue-on-error: true
+        with:
+          package-name: ${{ env.IMAGE_NAME }}
+      # publish docker image
+      - name: Publish image
+        run: |
+          docker login -u ${{ secrets.GIT_USER }} -p ${{ secrets.GIT_TOKEN }} docker.pkg.github.com
+          docker tag ${{ env.IMAGE_NAME }} docker.pkg.github.com/5gzorro/${{ env.REPOSITORY_NAME_LC }}/${{ env.IMAGE_NAME }}:${{ steps.getversion.outputs.version }}
+          docker push docker.pkg.github.com/5gzorro/${{ env.REPOSITORY_NAME_LC }}/${{ env.IMAGE_NAME }}:${{ steps.getversion.outputs.version }}
+      # create release
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        continue-on-error: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ steps.getversion.outputs.version }}
+          release_name: ${{ steps.getversion.outputs.version }}
+          body: |
+            ${{ github.event.head_commit.message }}
