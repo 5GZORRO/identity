@@ -4,9 +4,13 @@ from starlette.responses import RedirectResponse
 
 import json
 
+#Connection First
+from app.bootstrap import setup_issuer, setup_verifier
+#After Auth token 
+from app.authentication import authentication
+
 from app.did import did
 from app.credential import credential
-from app.proof_request import proof_request
 
 
 with open('app/openapi.json') as json_file:
@@ -24,7 +28,6 @@ app = FastAPI(
 ######## Routes to Endpoints in Different Files ########
 app.include_router(did.router)
 app.include_router(credential.router)
-app.include_router(proof_request.router)
 
 
 @app.get("/", include_in_schema=False)

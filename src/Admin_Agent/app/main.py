@@ -4,10 +4,17 @@ from starlette.responses import RedirectResponse
 
 import json
 
+#Connection First
+from app.bootstrap import setup_issuer, setup_verifier
+#Setup VC Schema
+from app.bootstrap import setup_vc_schema
+#After Auth token 
+from app.authentication import authentication
+
 from app.did import did, did_document
 from app.credential import credential
 from app.proof_request import proof_request
-from app.authentication import authentication
+#from app.authentication import authentication
 
 
 with open('app/openapi.json') as json_file:
@@ -27,7 +34,7 @@ app.include_router(did.router)
 app.include_router(did_document.router)
 app.include_router(credential.router)
 app.include_router(proof_request.router)
-app.include_router(authentication.router)
+#app.include_router(authentication.router)
 
 
 @app.get("/", include_in_schema=False)

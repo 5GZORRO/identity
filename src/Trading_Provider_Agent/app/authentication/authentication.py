@@ -9,7 +9,7 @@ header = {
 }
 
 print("#############################################################")
-print("################ ADMIN AGENT AUTH CREDENTIAL ################")
+print("########## TRADING PROVIDER AGENT AUTH CREDENTIAL ###########")
 print("#############################################################")
 
 try:
@@ -20,7 +20,7 @@ try:
         "description"
       ],
       "schema_version": "1.0",
-      "schema_name": "admin_auth"
+      "schema_name": "trade_provider_auth"
     }
     
     URL = os.environ["ISSUER_AGENT_URL"]
@@ -34,7 +34,7 @@ try:
     # POST Credential Definition
     cred_definition = {
       "support_revocation": False,
-      "tag": "admin_auth",
+      "tag": "trade_provider_auth",
       "schema_id": schema_id_value
     }
     
@@ -50,11 +50,11 @@ try:
             "attributes": [
                 {
                     "name": "name",
-                    "value": "admin_auth_cred"
+                    "value": "trade_provider_cred"
                 },
                 {
                     "name": "description",
-                    "value": "admin_auth_cred"
+                    "value": "trade_provider_cred"
                 }
             ]
         }
@@ -65,11 +65,11 @@ try:
     #print(final_resp.text)
     cred_info = json.loads(final_resp.text)
     id_token = cred_info["credential_exchange_id"]
-    print("ADMIN ID TOKEN: "+ str(id_token))
+    print("TRADING PROVIDER ID TOKEN: "+ str(id_token))
 
 except:
-    print(general_message("error", "Unable to emit Admin Auth Credential.", 400))
+    print(general_message("error", "Unable to emit Trading Provider Auth Credential.", 400))
     sys.exit()
 
-print("############## ADMIN AGENT AUTH CREDENTIAL - END ##############")
+print("######## TRADING PROVIDER AGENT AUTH CREDENTIAL - END ########")
 print("\n")

@@ -5,7 +5,13 @@ from fastapi.security import OAuth2PasswordBearer
 import requests, json
 from pydantic import BaseModel, HttpUrl
 
-from app import setup_issuer, setup_verifier, test_comm_between_agent
+#Connection First
+from app.bootstrap import setup_issuer, setup_verifier
+#After Auth token 
+from app.authentication import authentication
+
+#from app import test_comm_between_agent
+#from ..src/authentication import setup_i
 #oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 router = APIRouter(
@@ -26,7 +32,8 @@ async def create_did(did: str, verkey: str, handler_url: Optional[str] = None): 
 
 @router.get("/read")
 async def read_did():
-    return "ISSUER conn_id: " + setup_issuer.connection_id + "; VERIFIER conn_id: " + setup_verifier.connection_id
+    #return "Awaiting Implementation"
+    return "ISSUER conn_id: " + setup_issuer.connection_id + "; VERIFIER conn_id: " + setup_verifier.connection_id + "; ADMIN id_token: " + authentication.id_token
 
 @router.post("/register")
 async def register_did():
