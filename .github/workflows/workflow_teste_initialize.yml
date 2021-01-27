@@ -1,5 +1,5 @@
 name: Initialization server
-on: push
+on: workflow-dispatch
 env:
   USER_SERVER: ubuntu
   REPOSITORY_NAME: identity
@@ -38,8 +38,8 @@ jobs:
           
       - name: Pull package
         run: |
-          docker pull docker.pkg.github.com/${{ env.ID_GITHUB }}/$/${{ env.REPOSITORY_NAME_LC }}/${{ env.IMAGE_NAME_HOLDER }}:${{ steps.getversion.outputs.version }}
-          docker pull docker.pkg.github.com/${{ env.ID_GITHUB }}/$/${{ env.REPOSITORY_NAME_LC }}/${{ env.IMAGE_NAME_ISSUER }}:${{ steps.getversion.outputs.version }}
+          docker pull docker.pkg.github.com/${{ env.ID_GITHUB }}/${{ env.REPOSITORY_NAME_LC }}/${{ env.IMAGE_NAME_HOLDER }}:${{ steps.getversion.outputs.version }}
+          docker pull docker.pkg.github.com/${{ env.ID_GITHUB }}/${{ env.REPOSITORY_NAME_LC }}/${{ env.IMAGE_NAME_ISSUER }}:${{ steps.getversion.outputs.version }}
       
       - name: Running Agents
         run: |
