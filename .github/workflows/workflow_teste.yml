@@ -18,7 +18,7 @@ jobs:
         run: echo "::set-output name=version::$(cat VERSION)"
       # build docker image
       - name: Build image
-        run: sudo docker build -t ${{ env.IMAGE_NAME }} -f src/app/ ${{ env.DOCKER_NAME }}
+        run: sudo docker build -t ${{ env.IMAGE_NAME }} -f src/app/${{ env.DOCKER_NAME }}
       # delete old package version
       - uses: actions/delete-package-versions@v1
         continue-on-error: true
