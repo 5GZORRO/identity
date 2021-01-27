@@ -1,5 +1,5 @@
 name: workflow_teste_holder
-on: push
+#on: push
 env:
   #REPOSITORY_NAME: identity
   REPOSITORY_NAME_LC: identity
