@@ -1,5 +1,5 @@
 name: Initialization server
-on: workflow-dispatch
+on: workflow_dispatch
 env:
   USER_SERVER: ubuntu
   REPOSITORY_NAME: identity
