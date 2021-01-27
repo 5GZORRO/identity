@@ -1,0 +1,14 @@
+[
+    {
+        "name": "did",
+        "description": "Operations regarding DIDs."
+    },
+    {
+        "name": "issuer",
+        "description": "Operations regarding Issuer Requests."   
+    },
+    {
+        "name": "verifier",
+        "description": "Operations regarding Verifier Requests."   
+    }
+]

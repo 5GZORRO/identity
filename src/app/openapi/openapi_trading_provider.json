@@ -1,0 +1,10 @@
+[
+    {
+        "name": "did",
+        "description": "Operations regarding DIDs."
+    },
+    {
+        "name": "holder",
+        "description": "Operations regarding Holder Requests."   
+    }
+]

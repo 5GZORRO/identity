@@ -1,27 +1,29 @@
 version: '3'
 services: 
     admin_agent:
-        build: ../src/Admin_Agent
+        build: ./
         container_name: admin_agent
         #networks:
         #    front:
         #        ipv4_address: 172.220.18.0
-        command: uvicorn app.main:app --reload --workers 1 --host 0.0.0.0 --port 8000
+        command: uvicorn app.main_admin:app --reload --workers 1 --host 0.0.0.0 --port 8000
         ports:
             - "6200:8000"
         restart: always
         env_file:
-            - ../src/.env
+            - .env
+        #depends_on:
+        #    - mongodb_container
     
-    regulator_agent:
-        build: ../src/Regulator_Agent
-        container_name: regulator_agent
-        command: uvicorn app.main:app --reload --workers 1 --host 0.0.0.0 --port 8000
-        ports:
-            - "6400:8000"
-        restart: always
-        env_file:
-            - ../src/.env
+    #regulator_agent:
+    #    build: ../src/Regulator_Agent
+    #    container_name: regulator_agent
+    #    command: uvicorn app.main:app --reload --workers 1 --host 0.0.0.0 --port 8000
+    #    ports:
+    #        - "6400:8000"
+    #    restart: always
+    #    env_file:
+    #        - ../src/.env
 
     #trading_consumer_agent:
     #    build: ../src/Trading_Consumer_Agent
@@ -34,14 +36,29 @@ services:
     #        - ../src/.env
     
     trading_provider_agent:
-        build: ../src/Trading_Provider_Agent
+        build: ./
         container_name: trading_provider_agent
-        command: uvicorn app.main:app --reload --workers 1 --host 0.0.0.0 --port 8000
+        command: uvicorn app.main_trading_provider:app --reload --workers 1 --host 0.0.0.0 --port 8000
         ports:
             - "6800:8000"
         restart: always
         env_file:
-            - ../src/.env
+            - .env
+        #depends_on:
+        #    - mongodb_container
+    
+    #mongodb_container:
+    #    image: mongo:latest
+        #environment:
+        #    MONGO_INITDB_ROOT_USERNAME: root
+        #    MONGO_INITDB_ROOT_PASSWORD: rootpassword
+    #    ports:
+    #        - 27017:27017
+    #    volumes:
+    #        - mongodb_data_container:/data/db
+
+#volumes:
+#    mongodb_data_container:
         
 #networks:
 #  front:
