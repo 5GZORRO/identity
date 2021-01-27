@@ -1,12 +1,12 @@
-name: workflow_teste_issuer
+name: workflow_teste_holder
 on: push
 env:
   #REPOSITORY_NAME: identity
   REPOSITORY_NAME_LC: identity
   ID_GITHUB: 5gzorro
 
-  IMAGE_NAME: 5g-zorro-teste-agent_issuer  
-  DOCKER_NAME: Dockerfile_issuer
+  IMAGE_NAME: 5g-zorro-teste-agent_holder  
+  DOCKER_NAME: Dockerfile_holder
 jobs:
   publish_package: 
     runs-on: ubuntu-latest
