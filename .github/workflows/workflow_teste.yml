@@ -3,10 +3,10 @@ on: push
 env:
   #REPOSITORY_NAME: identity
   REPOSITORY_NAME_LC: identity
-  ID_GITHUB:5gzorro
+  ID_GITHUB: 5gzorro
 
   IMAGE_NAME: 5g-zorro-teste-agent  
-  DOCKER_NAME : Dockerfile_issuer
+  DOCKER_NAME: Dockerfile_issuer
 jobs:
   publish_package: 
     runs-on: ubuntu-latest
