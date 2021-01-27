@@ -1,0 +1,47 @@
+name: Initialization server
+on: push
+env:
+  USER_SERVER: ubuntu
+  REPOSITORY_NAME: identity
+  REPOSITORY_NAME_LC: identity
+ 
+  ID_GITHUB: 5gzorro
+
+  IMAGE_NAME_HOLDER: 5g-zorro-teste-agent_holder 
+  IMAGE_NAME_ISSUER: 5g-zorro-teste-agent_issuer 
+  
+jobs:
+  test:  
+    runs-on: test  
+    steps:
+      - uses: actions/checkout@v2
+      
+      - name: Read VERSION file
+        id: getversion
+        run: echo "::set-output name=version::$(cat VERSION)"
+      
+      - name: Stop container
+        continue-on-error: true
+        run: |
+          docker stop ${{ env.IMAGE_NAME_HOLDER }}
+          docker stop ${{ env.IMAGE_NAME_ISSUER }}
+        
+      - name: Remove images
+        continue-on-error: true
+        run: |
+            docker rmi $(docker images -q docker.pkg.github.com/${{ env.ID_GITHUB }}/${{ env.REPOSITORY_NAME_LC }}/${{ env.IMAGE_NAME_HOLDER }}) --force
+            docker rmi $(docker images -q docker.pkg.github.com/${{ env.ID_GITHUB }}/${{ env.REPOSITORY_NAME_LC }}/${{ env.IMAGE_NAME_ISSUER }}) --force
+            
+      - name: Login
+        run: |
+          docker login -u ${{ secrets.GIT_USER }} -p ${{ secrets.GIT_TOKEN }} docker.pkg.github.com
+          
+      - name: Pull package
+        run: |
+          docker pull docker.pkg.github.com/${{ env.ID_GITHUB }}/$/${{ env.REPOSITORY_NAME_LC }}/${{ env.IMAGE_NAME_HOLDER }}:${{ steps.getversion.outputs.version }}
+          docker pull docker.pkg.github.com/${{ env.ID_GITHUB }}/$/${{ env.REPOSITORY_NAME_LC }}/${{ env.IMAGE_NAME_ISSUER }}:${{ steps.getversion.outputs.version }}
+      
+      - name: Running Agents
+        run: |
+          docker run -d --rm --name ${{ env.IMAGE_NAME_ISSUER }} -p 6200:8000 --env-file /home/${{ env.USER_SERVER }}/.env docker.pkg.github.com/${{ env.ID_GITHUB }}/$/${{ env.REPOSITORY_NAME_LC }}/${{ env.IMAGE_NAME_ADMIN_AGENT }}:${{ steps.getversion.outputs.version }}
+          docker run -d --rm --name ${{ env.IMAGE_NAME_HOLDER }} -p 6400:8000 --env-file /home/${{ env.USER_SERVER }}/.env docker.pkg.github.com/${{ env.ID_GITHUB }}/$/${{ env.REPOSITORY_NAME_LC }}/${{ env.IMAGE_NAME_REGULATOR_AGENT }}:${{ steps.getversion.outputs.version }}
