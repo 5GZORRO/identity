@@ -43,5 +43,5 @@ jobs:
       
       - name: Running Agents
         run: |
-          docker run -d --rm --name ${{ env.IMAGE_NAME_ISSUER }} -p 6200:8000 --env-file /home/${{ env.USER_SERVER }}/.env docker.pkg.github.com/${{ env.ID_GITHUB }}/${{ env.REPOSITORY_NAME_LC }}/${{ env.IMAGE_NAME_ADMIN_AGENT }}:${{ steps.getversion.outputs.version }}
-          docker run -d --rm --name ${{ env.IMAGE_NAME_HOLDER }} -p 6400:8000 --env-file /home/${{ env.USER_SERVER }}/.env docker.pkg.github.com/${{ env.ID_GITHUB }}/${{ env.REPOSITORY_NAME_LC }}/${{ env.IMAGE_NAME_REGULATOR_AGENT }}:${{ steps.getversion.outputs.version }}
+          docker run -d --rm --name ${{ env.IMAGE_NAME_ISSUER }} -p 6200:8000 --env-file /home/${{ env.USER_SERVER }}/.env docker.pkg.github.com/${{ env.ID_GITHUB }}/${{ env.REPOSITORY_NAME_LC }}/${{ env.IMAGE_NAME_ISSUER }}:${{ steps.getversion.outputs.version }}
+          docker run -d --rm --name ${{ env.IMAGE_NAME_HOLDER }} -p 6400:8000 --env-file /home/${{ env.USER_SERVER }}/.env docker.pkg.github.com/${{ env.ID_GITHUB }}/${{ env.REPOSITORY_NAME_LC }}/${{ env.IMAGE_NAME_HOLDER }}:${{ steps.getversion.outputs.version }}
