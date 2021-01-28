@@ -23,16 +23,13 @@ jobs:
         continue-on-error: true
         run: |
           cd /home/${{ env.USER_SERVER }}
-          git clone https://${{ secrets.GIT_USER }}:${{ secrets.GIT_TOKEN }}@github.com/AlticeLabsProjects/${{ env.REPOSITORY_NAME }}.git
+          git clone https://${{ secrets.GIT_USER }}:${{ secrets.GIT_TOKEN }}@github.com/${{ env.ID_GITHUB }}/${{ env.REPOSITORY_NAME }}.git
       
       - name: update repository
         run: |
           cd /home/${{ env.USER_SERVER }}/${{ env.REPOSITORY_NAME }}
-          git pull https://${{ secrets.GIT_USER }}:${{ secrets.GIT_TOKEN }}@github.com/AlticeLabsProjects/${{ env.REPOSITORY_NAME }}.git
+          git pull https://${{ secrets.GIT_USER }}:${{ secrets.GIT_TOKEN }}@github.com/${{ env.ID_GITHUB }}/${{ env.REPOSITORY_NAME }}.git
 
-      - name: delete old project
-        run: |
-          python /home/${{ env.USER_SERVER }}/continuous/delete_old_versions.py ${{ env.USER_SERVER }} ${{ env.REPOSITORY_NAME }}
       # read version from VERSION file
       - name: Read VERSION file
         id: getversion
@@ -69,11 +66,7 @@ jobs:
     runs-on: test
     steps:
       - uses: actions/checkout@v2 
-      # clone project
-      
-      - name: delete old project
-        run: |
-          python /home/${{ env.USER_SERVER }}/continuous/delete_old_versions.py ${{ env.USER_SERVER }} ${{ env.REPOSITORY_NAME }}
+
       # read version from VERSION file
       - name: Read VERSION file
         id: getversion
