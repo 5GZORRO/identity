@@ -20,10 +20,16 @@ jobs:
       # clone project
       
       - name: clone repository
+        continue-on-error: true
         run: |
           cd /home/${{ env.USER_SERVER }}
           git clone https://${{ secrets.GIT_USER }}:${{ secrets.GIT_TOKEN }}@github.com/AlticeLabsProjects/${{ env.REPOSITORY_NAME }}.git
       
+      - name: update repository
+        run: |
+          cd /home/${{ env.USER_SERVER }}/${{ env.REPOSITORY_NAME }}
+          git pull https://${{ secrets.GIT_USER }}:${{ secrets.GIT_TOKEN }}@github.com/AlticeLabsProjects/${{ env.REPOSITORY_NAME }}.git
+
       - name: delete old project
         run: |
           python /home/${{ env.USER_SERVER }}/continuous/delete_old_versions.py ${{ env.USER_SERVER }} ${{ env.REPOSITORY_NAME }}
