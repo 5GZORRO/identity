@@ -62,9 +62,9 @@ jobs:
           release_name: ${{ steps.getversion.outputs.version }}
           body: |
             ${{ github.event.head_commit.message }}
-            
-  needs: [publish_package_ISSUER]
-  publish_package_HOLDER: 
+
+  publish_package_HOLDER:
+    needs: [publish_package_ISSUER]
     runs-on: test
     steps:
       - uses: actions/checkout@v2 
