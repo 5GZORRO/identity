@@ -31,7 +31,7 @@ app = FastAPI(
 )
 
 ######## Routes to Endpoints in Different Files ########
-#app.include_router(did.router)
+app.include_router(did.router)
 app.include_router(issuer.router)
 app.include_router(verifier.router)
 
