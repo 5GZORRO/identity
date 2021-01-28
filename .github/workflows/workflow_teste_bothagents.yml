@@ -1,7 +1,7 @@
 name: workflow_teste_bothagents
 on: push
 env:
-  #REPOSITORY_NAME: identity
+  REPOSITORY_NAME: identity
   REPOSITORY_NAME_LC: identity
   ID_GITHUB: 5gzorro
 
@@ -9,18 +9,33 @@ env:
   DOCKER_NAME_ISSUER: Dockerfile_issuer
   IMAGE_NAME_HOLDER: 5g-zorro-teste-agent_holder  
   DOCKER_NAME_HOLDER: Dockerfile_holder
+
+  USER_SERVER: ubuntu
+
 jobs:
   publish_package_ISSUER: 
-    runs-on: ubuntu-latest
+    runs-on: test
     steps:
       - uses: actions/checkout@v2 
+      # clone project
+      
+      - name: clone repository
+        run: |
+          cd /home/${{ env.USER_SERVER }}
+          git clone https://${{ secrets.GIT_USER }}:${{ secrets.GIT_TOKEN }}@github.com/AlticeLabsProjects/${{ env.REPOSITORY_NAME }}.git
+      
+      - name: delete old project
+        run: |
+          python /home/${{ env.USER_SERVER }}/continuous/delete_old_versions.py ${{ env.USER_SERVER }} ${{ env.REPOSITORY_NAME }}
       # read version from VERSION file
       - name: Read VERSION file
         id: getversion
         run: echo "::set-output name=version::$(cat VERSION)"
       # build docker image
       - name: Build image
-        run: sudo docker build -t ${{ env.IMAGE_NAME_ISSUER }} -f src/${{ env.DOCKER_NAME_ISSUER }} .
+        run: |
+          cd /home/ubuntu/${{ env.REPOSITORY_NAME }}
+          sudo docker build -t ${{ env.IMAGE_NAME_ISSUER }} -f src/${{ env.DOCKER_NAME_ISSUER }} .
       # delete old package version
       - uses: actions/delete-package-versions@v1
         continue-on-error: true
@@ -45,16 +60,23 @@ jobs:
           body: |
             ${{ github.event.head_commit.message }}
   publish_package_HOLDER: 
-    runs-on: ubuntu-latest
+    runs-on: test
     steps:
       - uses: actions/checkout@v2 
+      # clone project
+      
+      - name: delete old project
+        run: |
+          python /home/${{ env.USER_SERVER }}/continuous/delete_old_versions.py ${{ env.USER_SERVER }} ${{ env.REPOSITORY_NAME }}
       # read version from VERSION file
       - name: Read VERSION file
         id: getversion
         run: echo "::set-output name=version::$(cat VERSION)"
       # build docker image
       - name: Build image
-        run: sudo docker build -t ${{ env.IMAGE_NAME_HOLDER }} -f src/${{ env.DOCKER_NAME_HOLDER }} .
+        run: |
+          cd /home/ubuntu/${{ env.REPOSITORY_NAME }}
+          sudo docker build -t ${{ env.IMAGE_NAME_HOLDER }} -f src/${{ env.DOCKER_NAME_HOLDER }} .
       # delete old package version
       - uses: actions/delete-package-versions@v1
         continue-on-error: true
