@@ -1,7 +1,7 @@
 FROM python:3.8.3-slim-buster
 
 # set working directory
-WORKDIR /usr/src
+WORKDIR /usr/src/app
 
 # set environment variables
 ENV PYTHONDONTWRITEBYTECODE 1
@@ -19,4 +19,4 @@ RUN pip install -r requirements.txt
 
 # add app
 COPY . .
-CMD [ "uvicorn", "app.main_trading_provider:app", "--reload", "--workers", "1", "--host", "0.0.0.0", "--port", "8000" ]
+CMD [ "uvicorn", "main_trading_provider:app", "--reload", "--workers", "1", "--host", "0.0.0.0", "--port", "8000" ]
