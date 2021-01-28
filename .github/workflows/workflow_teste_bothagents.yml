@@ -20,7 +20,7 @@ jobs:
         run: echo "::set-output name=version::$(cat VERSION)"
       # build docker image
       - name: Build image
-        run: sudo docker build -t ${{ env.IMAGE_NAME_ISSUER }} -f src/app/${{ env.DOCKER_NAME_ISSUER }} .
+        run: sudo docker build -t ${{ env.IMAGE_NAME_ISSUER }} -f src/${{ env.DOCKER_NAME_ISSUER }} .
       # delete old package version
       - uses: actions/delete-package-versions@v1
         continue-on-error: true
@@ -54,7 +54,7 @@ jobs:
         run: echo "::set-output name=version::$(cat VERSION)"
       # build docker image
       - name: Build image
-        run: sudo docker build -t ${{ env.IMAGE_NAME_HOLDER }} -f src/app/${{ env.DOCKER_NAME_HOLDER }} .
+        run: sudo docker build -t ${{ env.IMAGE_NAME_HOLDER }} -f src/${{ env.DOCKER_NAME_HOLDER }} .
       # delete old package version
       - uses: actions/delete-package-versions@v1
         continue-on-error: true
