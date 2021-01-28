@@ -62,6 +62,8 @@ jobs:
           release_name: ${{ steps.getversion.outputs.version }}
           body: |
             ${{ github.event.head_commit.message }}
+            
+  needs: [publish_package_ISSUER]
   publish_package_HOLDER: 
     runs-on: test
     steps:
