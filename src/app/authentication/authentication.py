@@ -11,7 +11,7 @@ header = {
 print("#############################################################")
 print("################# ID TOKEN AUTH CREDENTIAL ##################")
 print("#############################################################")
-'''
+
 try:
     # POST AUTH Schema
     schema = {
@@ -70,8 +70,8 @@ try:
 except:
     print(general_message("error", "Unable to emit Admin Auth Credential.", 400))
     sys.exit()
-'''
-id_token = "develop_teste"
+
+#id_token = "develop_teste"
 print("ID TOKEN: "+ str(id_token))
 print("############## ID TOKEN AUTH CREDENTIAL - END ##############")
 print("\n")

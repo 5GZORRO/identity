@@ -23,7 +23,7 @@ print("###########################################################")
 print("#################### ISSUER CONNECTION ####################")
 print("###########################################################")
 #connection_id = "teste"
-'''
+
 try:
     URL = os.environ["ISSUER_AGENT_URL"]
     resp = requests.post(URL+"/connections/create-invitation", headers=header, timeout=30)
@@ -56,6 +56,6 @@ try:
 except:
     print(general_message("error", "Unable to establish Issuer Connection.", 400))
     sys.exit()
-'''
+
 print("#################### ISSUER CONNECTION - END ####################")
 print("\n")

@@ -16,17 +16,17 @@ info:
 tags:
 - name: "authentication"
   description: "Operations regarding Authentication."
-- name: "did"
-  description: "Operations regarding DIDs."
+- name: "holder"
+  description: "Operations regarding Holder Operations."
   externalDocs:
     description: "Find out more"
     url: "http://swagger.io"
 #- name: "did_document"
 #  description: "Operations regarding DID Documents."
-- name: "credential"
-  description: "Operations regarding Verifiable Credentials."
-- name: "proof_request"
-  description: "Operations regarding Proof Requests."
+- name: "issuer"
+  description: "Operations regarding Issuer Operations."
+- name: "verifier"
+  description: "Operations regarding Verifier Operations."
   #externalDocs:
   #  description: "Find out more about our store"
   #  url: "http://swagger.io"
@@ -68,10 +68,10 @@ paths:
         description: "id_token"
         required: true
         type: "string"
-  /dids/create:
+  /holder/create_did:
     post:
       tags:
-      - "did"
+      - "holder"
       summary: "Create an DID"
       description: ""
       operationId: "uploadFile"
@@ -116,10 +116,10 @@ paths:
       #- petstore_auth:
       #  - "write:pets"
       #  - "read:pets"
-  /dids/readStatus:
+  /holder/read_did_status:
     get:
       tags:
-      - "did"
+      - "holder"
       summary: "Read DID Status"
       description: ""
       #operationId: "uploadFile"
@@ -132,10 +132,10 @@ paths:
           description: "Successful operation"
           schema:
             $ref: "#/definitions/ApiResponse"
-  /dids/read:
+  /holder/read_did:
     get:
       tags:
-      - "did"
+      - "holder"
       summary: "Read DID"
       description: ""
       #operationId: "uploadFile"
@@ -148,10 +148,10 @@ paths:
           description: "Successful operation"
           schema:
             $ref: "#/definitions/ApiResponse"
-  /dids/remove:
+  /holder/remove_did:
     delete:
       tags:
-      - "did"
+      - "holder"
       summary: "Remove DID"
       description: ""
       #operationId: "uploadFile"
@@ -176,10 +176,10 @@ paths:
           description: "Successful operation"
           schema:
             $ref: "#/definitions/ApiResponse"
-  /dids/update:
+  /holder/update_did:
     put:
       tags:
-      - "did"
+      - "holder"
       summary: "Update DID"
       description: ""
       #operationId: "uploadFile"
@@ -198,10 +198,10 @@ paths:
           description: "Successful operation"
           schema:
             $ref: "#/definitions/ApiResponse"
-  /did/get_invitation:
+  /holder/get_invitation:
     get:
       tags:
-      - "did"
+      - "holder"
       summary: "Get Invitation"
       description: ""
       #operationId: "uploadFile"
@@ -214,10 +214,10 @@ paths:
           description: "Successful operation"
           schema:
             $ref: "#/definitions/ApiResponse"
-  /did/revoke_credential:
+  /holder/revoke_credential:
     post:
       tags:
-      - "did"
+      - "holder"
       summary: "Revoke Credential"
       description: ""
       #operationId: "uploadFile"
@@ -262,10 +262,10 @@ paths:
   #        description: "Successful operation"
   #        schema:
   #          $ref: "#/definitions/ApiResponse"
-  /credentials/issue:
+  /issuer/issue_requested_credential:
     post:
       tags:
-      - "credential"
+      - "issuer"
       summary: "Issue Verifiable Credential"
       description: ""
       #operationId: "uploadFile"
@@ -278,10 +278,10 @@ paths:
           description: "Successful operation"
           schema:
             $ref: "#/definitions/ApiResponse"
-  /credentials/decline:
+  /issuer/decline_issue_request:
     post:
       tags:
-      - "credential"
+      - "issuer"
       summary: "Decline Verifiable Credential"
       description: ""
       #operationId: "uploadFile"
@@ -294,10 +294,10 @@ paths:
           description: "Successful operation"
           schema:
             $ref: "#/definitions/ApiResponse"
-  /credentials/read:
+  /issuer/read_credential:
     get:
       tags:
-      - "credential"
+      - "issuer"
       summary: "Read Verifiable Credential"
       description: ""
       #operationId: "uploadFile"
@@ -310,10 +310,10 @@ paths:
           description: "Successful operation"
           schema:
             $ref: "#/definitions/ApiResponse"
-  /credentials/read/all:
+  /issuer/read_credentials:
     get:
       tags:
-      - "credential"
+      - "issuer"
       summary: "Read all Verifiable Credentials"
       description: ""
       #operationId: "uploadFile"
@@ -326,10 +326,10 @@ paths:
           description: "Successful operation"
           schema:
             $ref: "#/definitions/ApiResponse"
-  /credentials/read/declined:
+  /issuer/read_declined_issue_request:
     get:
       tags:
-      - "credential"
+      - "issuer"
       summary: "Read declined Verifiable Credential"
       description: ""
       #operationId: "uploadFile"
@@ -342,10 +342,10 @@ paths:
           description: "Successful operation"
           schema:
             $ref: "#/definitions/ApiResponse"
-  /credentials/read/declined/all:
+  /issuer/read_declined_issue_requests:
     get:
       tags:
-      - "credential"
+      - "issuer"
       summary: "Read all declined Verifiable Credentials"
       description: ""
       #operationId: "uploadFile"
@@ -358,27 +358,11 @@ paths:
           description: "Successful operation"
           schema:
             $ref: "#/definitions/ApiResponse"
-  /credentials/revoke:
+  /issuer/revoke_credential:
     put:
       tags:
-      - "credential"
+      - "issuer"
       summary: "Revoke Verifiable Credential"
-      description: ""
-      #operationId: "uploadFile"
-      #consumes:
-      #- "multipart/form-data"
-      produces:
-      - "application/json"
-      responses:
-        200:
-          description: "Successful operation"
-          schema:
-            $ref: "#/definitions/ApiResponse"
-  /credentials/revoke/read:
-    get:
-      tags:
-      - "credential"
-      summary: "Read Revoked Verifiable Credential"
       description: ""
       #operationId: "uploadFile"
       #consumes:
@@ -406,10 +390,10 @@ paths:
   #        description: "Successful operation"
   #        schema:
   #          $ref: "#/definitions/ApiResponse"
-  /proof_requests/create:
+  /verifier/proof_request:
     post:
       tags:
-      - "proof_request"
+      - "verifier"
       summary: "Create Proof Request"
       description: ""
       #operationId: "uploadFile"
@@ -422,10 +406,10 @@ paths:
           description: "Successful operation"
           schema:
             $ref: "#/definitions/ApiResponse"
-  /proof_requests/read/status:
+  /verifier/read_proof_status:
     post:
       tags:
-      - "proof_request"
+      - "verifier"
       summary: "Read Proof Request Status"
       description: ""
       #operationId: "uploadFile"
@@ -470,10 +454,10 @@ paths:
   #        description: "Successful operation"
   #        schema:
   #          $ref: "#/definitions/ApiResponse"
-  /proof_requests/read/presentation:
+  /verifier/read_proof_presentation:
     get:
       tags:
-      - "proof_request"
+      - "verifier"
       summary: "Read Proof Request Presentation"
       description: ""
       #operationId: "uploadFile"

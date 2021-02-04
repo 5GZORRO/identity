@@ -13,7 +13,7 @@ print("#############################################################")
 print("#################### VERIFIER CONNECTION ####################")
 print("#############################################################")
 #connection_id = "teste_2"
-'''
+
 try:
     URL = os.environ["VERIFIER_AGENT_URL"]
     resp = requests.post(URL+"/connections/create-invitation", headers=header, timeout=30)

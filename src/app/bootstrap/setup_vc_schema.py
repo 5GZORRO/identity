@@ -13,7 +13,7 @@ time.sleep(5)
 print("#############################################################")
 print("############ VERIFIABLE CREDENTIAL SCHEMA SETUP #############")
 print("#############################################################")
-'''
+
 try:
     # POST VC Schema
     schema = {
@@ -49,6 +49,6 @@ try:
 except:
     print(general_message("error", "Unable to create Verifiable Credential schema.", 400))
     sys.exit()
-'''
+
 print("########### VERIFIABLE CREDENTIAL SCHEMA SETUP - END ###########")
 print("\n")

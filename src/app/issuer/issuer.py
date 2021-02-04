@@ -5,7 +5,8 @@ import requests, json, os
 
 from bson import ObjectId
 
-from app.bootstrap import setup_issuer, setup_vc_schema, mongo_setup
+from app.db import mongo_setup_admin
+from app.bootstrap import setup_issuer, setup_vc_schema
 from app.authentication import authentication
 
 router = APIRouter(
@@ -13,7 +14,18 @@ router = APIRouter(
     tags=["issuer"]
 )
 
-class VC(BaseModel):
+#class VC(BaseModel):
+#    type: str
+#    credentialSubject: dict
+#    handler_url: str
+
+class ReqCred(BaseModel):
+    type: str
+    credentialSubject: dict
+    handler_url: str
+
+class IssueCred(BaseModel):
+    holder_request_id: str
     type: str
     credentialSubject: dict
     handler_url: str
@@ -24,26 +36,38 @@ header = {
 
 ####################### Verifiable Credentials Management #######################
 @router.post("/request_credential_issue/{request_id}") #, include_in_schema=False 
-async def request_credential_issue(request_id: str, response: Response, body: VC):
+async def request_credential_issue(request_id: str, response: Response, body: ReqCred):
     # CHECK FOR REQUEST RECORD
-    try:
-        test = mongo_setup.collection.find_one({"_id": ObjectId(request_id)})
+    #test = mongo_setup_admin.collection.find_one({"_id": ObjectId(request_id)})
+    test = mongo_setup_admin.collection.find_one({"holder_request_id": request_id})
+    if test != None:
         if test["state"] == "Credential Issued":
             return "Credential Request was already issued"
-        #print(test)
-    except:
-        return "Credential Request doesn't exist in Database"
 
+    # SUBMIT REQUEST TO ADMIN HANDLER
     try:
         #print("\n" + str(body))
         body_dict = body.dict()
         #print("ID: " + str(body_dict["id"]))
 
-        URL = os.environ["ISSUER_AGENT_URL"]
-        print(body_dict)
+        res_to_insert_db = {
+            "holder_request_id": request_id,
+            "type": body_dict["type"],
+            "credentialSubject": {
+                "id": body_dict["credentialSubject"]["id"],
+                "claims": body_dict["credentialSubject"]["claims"]
+            },
+            "state": "Credential Requested",
+            "handler_url": body_dict["handler_url"]
+        }
+
+        #print(res_to_insert_db)
+        mongo_setup_admin.collection.insert_one(res_to_insert_db)
+        #print("\n")
 
         res_to_admin_handler = {
-            "_id": request_id,
+            "_id": str(res_to_insert_db["_id"]),
+            "holder_request_id": request_id,
             "type": body_dict["type"],
             "credentialSubject": {
                 "id": body_dict["credentialSubject"]["id"],
@@ -62,15 +86,16 @@ async def request_credential_issue(request_id: str, response: Response, body: VC
     except:
         return "Unable to connect to Admin Handler"
 
+
 @router.post("/issue_requested_credential/{request_id}", status_code=201)
-async def issue_requested_credential(request_id: str, response: Response, token: str, body: VC):
+async def issue_requested_credential(request_id: str, response: Response, token: str, body: IssueCred):
     if token != authentication.id_token:
         response.status_code = status.HTTP_401_UNAUTHORIZED
         return "Invalid ID Token"
 
     # CHECK FOR REQUEST RECORD
     try:
-        test = mongo_setup.collection.find_one({"_id": ObjectId(request_id)})
+        test = mongo_setup_admin.collection.find_one({"_id": ObjectId(request_id)})
         print(test)
     except:
         return "Credential Request doesn't exist in Database"
@@ -85,7 +110,7 @@ async def issue_requested_credential(request_id: str, response: Response, token:
         
         # Configure Credential to be published
         issue_cred = {
-            "connection_id": "9248ee8a-7b70-4723-a36a-94e863745133", #setup_issuer.connection_id,
+            "connection_id": setup_issuer.connection_id, #"9248ee8a-7b70-4723-a36a-94e863745133"
             "cred_def_id": setup_vc_schema.cred_def_id,
             "credential_proposal": {
                 "attributes": [
@@ -109,7 +134,7 @@ async def issue_requested_credential(request_id: str, response: Response, token:
         if cred_info["state"] == "offer_sent":
             # SUBSCRIBE TO AGENT RESPONSE
             try:
-                mongo_setup.collection.find_one_and_update({'_id': ObjectId(request_id)}, {'$set': {"state": "Credential Issued"}}) # UPDATE REQUEST RECORD FROM MONGO
+                mongo_setup_admin.collection.find_one_and_update({'_id': ObjectId(request_id)}, {'$set': {"state": "Credential Issued"}}) # UPDATE REQUEST RECORD FROM MONGO
                 #mongo_setup.collection.remove({"_id": ObjectId(request_id)})
 
                 resp_cred = {
@@ -125,12 +150,12 @@ async def issue_requested_credential(request_id: str, response: Response, token:
             except:        
                 return "Unable to subscribe to response"
 
-            # SEND REQUEST RECORD TO HOLDER HANDLER
+            # NOTIFY HOLDER AGENT
             try:
-                #print(body_dict["handler_url"])
-                requests.post(body_dict["handler_url"], headers=header, json=resp_cred, timeout=30)
+                holder_url = os.environ["TRADING_PROVIDER_AGENT_CONTROLLER_URL"]
+                requests.post(holder_url+"/holder/update_did_state/"+str(body_dict["holder_request_id"]), json=resp_cred, timeout=60)
             except:
-                return "Unable to send info to Holder Handler"
+                return "Unable to notify Holder"
             
             return resp_cred
 
@@ -140,8 +165,51 @@ async def issue_requested_credential(request_id: str, response: Response, token:
     except:
         return "Unable to connect to Issuer Agent"
 
+@router.get("/read_credential")
+async def read_credential(response: Response, token: str, cred_id: str):
+    if token != authentication.id_token:
+        response.status_code = status.HTTP_401_UNAUTHORIZED
+        return "Invalid ID Token"
+
+    try:
+        URL = os.environ["HOLDER_AGENT_URL"]
+        resp = requests.get(URL+"/credential/"+cred_id, timeout=30)
+        body = resp.json()
+        return body
+
+    except:
+        return "Unable to fetch specific Marketplace Credential"
+
+@router.get("/read_credential/all")
+async def read_all_credentials(response: Response, token: str):
+    if token != authentication.id_token:
+        response.status_code = status.HTTP_401_UNAUTHORIZED
+        return "Invalid ID Token"
+
+    try:
+        URL = os.environ["HOLDER_AGENT_URL"]
+        resp = requests.get(URL+"/credentials", timeout=30)
+        body = resp.json()
+        return body
+
+    except:
+        return "Unable to fetch Marketplace Credentials"
+
+@router.put("/revoke")
+async def revoke_credential():
+    return "Awaiting Implementation"
+
+@router.get("/read/revoke")
+async def read_revoked_credential():
+    return "Awaiting Implementation"
+
+@router.delete("/remove")
+async def remove_credential():
+    return "Awaiting Implementation"
+
+'''
 @router.post("/issue")
-async def issue_credential(response: Response, token: str, body: VC, handler_url: Optional[str] = None):
+async def issue_credential(response: Response, token: str, body: ReqCred, handler_url: Optional[str] = None):
     if token != authentication.id_token:
         response.status_code = status.HTTP_401_UNAUTHORIZED
         return "Invalid ID Token"
@@ -221,45 +289,4 @@ async def issue_credential(response: Response, token: str, body: VC, handler_url
     
     except:
         return "Unable to connect to Issuer Agent"
-
-@router.get("/read")
-async def read_credential(response: Response, token: str, cred_id: str):
-    if token != authentication.id_token:
-        response.status_code = status.HTTP_401_UNAUTHORIZED
-        return "Invalid ID Token"
-
-    try:
-        URL = os.environ["HOLDER_AGENT_URL"]
-        resp = requests.get(URL+"/credential/"+cred_id, timeout=30)
-        body = resp.json()
-        return body
-
-    except:
-        return "Unable to fetch specific Marketplace Credential"
-
-@router.get("/read/all")
-async def read_all_credentials(response: Response, token: str):
-    if token != authentication.id_token:
-        response.status_code = status.HTTP_401_UNAUTHORIZED
-        return "Invalid ID Token"
-
-    try:
-        URL = os.environ["HOLDER_AGENT_URL"]
-        resp = requests.get(URL+"/credentials", timeout=30)
-        body = resp.json()
-        return body
-
-    except:
-        return "Unable to fetch Marketplace Credentials"
-
-@router.put("/revoke")
-async def revoke_credential():
-    return "Awaiting Implementation"
-
-@router.get("/read/revoke")
-async def read_revoked_credential():
-    return "Awaiting Implementation"
-
-@router.delete("/remove")
-async def remove_credential():
-    return "Awaiting Implementation"
+'''

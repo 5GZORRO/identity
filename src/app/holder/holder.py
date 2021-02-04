@@ -6,7 +6,7 @@ import requests, json, sys, os
 from bson import ObjectId
 
 from app.authentication import authentication
-from app.bootstrap import mongo_setup
+from app.db import mongo_setup_provider
 
 router = APIRouter(
     prefix="/holder",
@@ -55,15 +55,15 @@ async def request_credential(response: Response, token: str, body: Offer, handle
             "handler_url": handler_url
         }
 
-        #mongo_resp = mongo_setup.collection.insert_one(res_to_mongo)
+        #mongo_resp = mongo_setup_provider.collection.insert_one(res_to_mongo)
         #print(mongo_resp.inserted_id)
-        #test = mongo_setup.collection.find_one({"_id": ObjectId(mongo_resp.inserted_id)})
+        #test = mongo_setup_provider.collection.find_one({"_id": ObjectId(mongo_resp.inserted_id)})
         #print(test)
 
-        mongo_setup.collection.insert_one(res_to_mongo)
+        mongo_setup_provider.collection.insert_one(res_to_mongo)
         print(res_to_mongo["_id"])
         print("\n")
-        #test = mongo_setup.collection.find_one({"_id": ObjectId(res_to_mongo["_id"])})
+        #test = mongo_setup_provider.collection.find_one({"_id": ObjectId(res_to_mongo["_id"])})
         #print(test)
         #print(test["_id"])
 
@@ -107,11 +107,6 @@ async def request_credential(response: Response, token: str, body: Offer, handle
             holder_body = resp.json()
         except:
             return "Unable to send request info to Holder's Handler"
-        #if handler_url != None:
-        #    try:
-        #        requests.post(handler_url, headers=header, json=body, timeout=30)
-        #    except:
-        #        body.update({"handler_info": "Unable to send data to Handler URL"})
 
         #response.status_code = status.HTTP_201_CREATED
         return client_res
@@ -119,7 +114,45 @@ async def request_credential(response: Response, token: str, body: Offer, handle
     except:
         return "Unable to perform Credential issuing request."
 
-@router.get("/read")
+@router.post("/update_did_state/{request_id}", include_in_schema=False)
+async def update_did_state(request_id: str, body: dict, response: Response):
+    #UPDATE MONGO RECORD
+    try:
+        mongo_setup_provider.collection.find_one_and_update({'_id': ObjectId(request_id)}, {'$set': {"state": "Credential Issued"}}) # UPDATE REQUEST RECORD FROM MONGO
+        subscriber = mongo_setup_provider.collection.find_one({"_id": ObjectId(request_id)})
+        print(subscriber["handler_url"])
+    except:
+        return "Unable to update Mongo record"
+    
+    # SEND REQUEST RECORD TO HOLDER HANDLER
+    try:
+        requests.post(subscriber["handler_url"], headers=header, json=body, timeout=30)
+    except:
+        return "Unable to send info to Holder Handler"
+
+@router.get("/read_did_status")
+async def read_credential_status(response: Response, token: str, request_id: str):
+    if token != authentication.id_token:
+        response.status_code = status.HTTP_401_UNAUTHORIZED
+        return "Invalid ID Token"
+
+    try:
+        subscriber = mongo_setup_provider.collection.find_one({"_id": ObjectId(request_id)})
+        res = {
+            "type": subscriber["type"],
+            "credentialSubject": {
+                "id": subscriber["credentialSubject"]["id"],
+                "claims": subscriber["credentialSubject"]["claims"]
+            },
+            "state": subscriber["state"],
+            "handler_url": subscriber["handler_url"]
+        }
+        return res
+
+    except:
+        return "Unable to fetch requested DID"
+
+@router.get("/read_did")
 async def read_credential(response: Response, token: str, cred_id: str):
     if token != authentication.id_token:
         response.status_code = status.HTTP_401_UNAUTHORIZED
@@ -134,7 +167,7 @@ async def read_credential(response: Response, token: str, cred_id: str):
     except:
         return "Unable to fetch specific Marketplace Credential"
 
-@router.get("/read/all")
+@router.get("/read_did/all")
 async def read_all_credentials(response: Response, token: str, handler_url: Optional[str] = None):
     if token != authentication.id_token:
         response.status_code = status.HTTP_401_UNAUTHORIZED
