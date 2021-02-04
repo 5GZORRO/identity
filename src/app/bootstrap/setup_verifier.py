@@ -46,6 +46,6 @@ try:
 except:
     print(general_message("error", "Unable to establish Verifier Connection.", 400))
     sys.exit()
-'''
+
 print("#################### VERIFIER CONNECTION - END ####################")
 print("\n")

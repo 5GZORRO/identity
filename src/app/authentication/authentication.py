@@ -72,6 +72,6 @@ except:
     sys.exit()
 
 #id_token = "develop_teste"
-print("ID TOKEN: "+ str(id_token))
+#print("ID TOKEN: "+ str(id_token))
 print("############## ID TOKEN AUTH CREDENTIAL - END ##############")
 print("\n")
