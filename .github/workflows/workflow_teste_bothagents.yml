@@ -1,0 +1,103 @@
+name: workflow_teste_bothagents
+on: push
+env:
+  REPOSITORY_NAME: identity
+  REPOSITORY_NAME_LC: identity
+  ID_GITHUB: 5gzorro
+
+  IMAGE_NAME_ISSUER: 5g-zorro-teste-agent_issuer  
+  DOCKER_NAME_ISSUER: Dockerfile_issuer
+  IMAGE_NAME_HOLDER: 5g-zorro-teste-agent_holder  
+  DOCKER_NAME_HOLDER: Dockerfile_holder
+
+  USER_SERVER: ubuntu
+
+jobs:
+  publish_package_ISSUER: 
+    runs-on: test
+    steps:
+      - uses: actions/checkout@v2 
+      # clone project
+      
+      - name: clone repository
+        continue-on-error: true
+        run: |
+          cd /home/${{ env.USER_SERVER }}
+          git clone https://${{ secrets.GIT_USER }}:${{ secrets.GIT_TOKEN }}@github.com/${{ env.ID_GITHUB }}/${{ env.REPOSITORY_NAME }}.git
+      
+      - name: update repository
+        run: |
+          cd /home/${{ env.USER_SERVER }}/${{ env.REPOSITORY_NAME }}
+          git pull https://${{ secrets.GIT_USER }}:${{ secrets.GIT_TOKEN }}@github.com/${{ env.ID_GITHUB }}/${{ env.REPOSITORY_NAME }}.git
+
+      # read version from VERSION file
+      - name: Read VERSION file
+        id: getversion
+        run: echo "::set-output name=version::$(cat VERSION)"
+      # build docker image
+      - name: Build image
+        run: |
+          cd /home/ubuntu/${{ env.REPOSITORY_NAME }}/src
+          sudo docker build -t ${{ env.IMAGE_NAME_ISSUER }} -f ${{ env.DOCKER_NAME_ISSUER }} .
+      # delete old package version
+      - uses: actions/delete-package-versions@v1
+        continue-on-error: true
+        with:
+          package-name: ${{ env.IMAGE_NAME_ISSUER }}
+      # publish docker image
+      - name: Publish image
+        run: |
+          docker login -u ${{ secrets.GIT_USER }} -p ${{ secrets.GIT_TOKEN }} docker.pkg.github.com
+          docker tag ${{ env.IMAGE_NAME_ISSUER }} docker.pkg.github.com/${{ env.ID_GITHUB }}/${{ env.REPOSITORY_NAME_LC }}/${{ env.IMAGE_NAME_ISSUER }}:${{ steps.getversion.outputs.version }}
+          docker push docker.pkg.github.com/${{ env.ID_GITHUB }}/${{ env.REPOSITORY_NAME_LC }}/${{ env.IMAGE_NAME_ISSUER }}:${{ steps.getversion.outputs.version }}
+      # create release
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        continue-on-error: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ steps.getversion.outputs.version }}
+          release_name: ${{ steps.getversion.outputs.version }}
+          body: |
+            ${{ github.event.head_commit.message }}
+
+  publish_package_HOLDER:
+    needs: [publish_package_ISSUER]
+    runs-on: test
+    steps:
+      - uses: actions/checkout@v2 
+
+      # read version from VERSION file
+      - name: Read VERSION file
+        id: getversion
+        run: echo "::set-output name=version::$(cat VERSION)"
+      # build docker image
+      - name: Build image
+        run: |
+          cd /home/ubuntu/${{ env.REPOSITORY_NAME }}/src
+          sudo docker build -t ${{ env.IMAGE_NAME_HOLDER }} -f ${{ env.DOCKER_NAME_HOLDER }} .
+      # delete old package version
+      - uses: actions/delete-package-versions@v1
+        continue-on-error: true
+        with:
+          package-name: ${{ env.IMAGE_NAME_HOLDER }}
+      # publish docker image
+      - name: Publish image
+        run: |
+          docker login -u ${{ secrets.GIT_USER }} -p ${{ secrets.GIT_TOKEN }} docker.pkg.github.com
+          docker tag ${{ env.IMAGE_NAME_HOLDER }} docker.pkg.github.com/${{ env.ID_GITHUB }}/${{ env.REPOSITORY_NAME_LC }}/${{ env.IMAGE_NAME_HOLDER }}:${{ steps.getversion.outputs.version }}
+          docker push docker.pkg.github.com/${{ env.ID_GITHUB }}/${{ env.REPOSITORY_NAME_LC }}/${{ env.IMAGE_NAME_HOLDER }}:${{ steps.getversion.outputs.version }}
+      # create release
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        continue-on-error: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ steps.getversion.outputs.version }}
+          release_name: ${{ steps.getversion.outputs.version }}
+          body: |
+            ${{ github.event.head_commit.message }}
