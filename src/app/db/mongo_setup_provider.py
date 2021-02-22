@@ -13,10 +13,3 @@ db = conn.provider
 
 # Created or Switched to collection names: offers
 collection = db.offers
-
-#data={
-#    "teste":"ressd1"
-#}
-
-#rec_id = collection.insert_one(data)
-#print(rec_id.inserted_id)

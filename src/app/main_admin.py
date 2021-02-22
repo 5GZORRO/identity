@@ -11,7 +11,7 @@ from app.bootstrap import setup_issuer, setup_verifier
 #Setup VC Schema
 from app.bootstrap import setup_vc_schema
 #After Auth token 
-from app.authentication import authentication
+#from app.authentication import authentication
 
 from app.did import did
 from app.issuer import issuer
@@ -40,7 +40,3 @@ app.include_router(verifier.router)
 def redirect_main():
     response = RedirectResponse(url='/docs')
     return response
-
-#@app.get("/items/{item_id}")
-#def read_item(item_id: int, q: Optional[str] = None):
-#    return {"item_id": item_id, "q": q}

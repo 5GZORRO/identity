@@ -39,10 +39,7 @@ async def request_credential(response: Response, token: str, body: Offer, handle
 
     # STORE REQUEST ON MONGO
     try:
-        #print("Received body: " + str(body))
-        #print("\n")
         body_dict = body.dict()
-        #print("Converted body: " + str(body_dict))
 
         # MONGO WILL ADD _id TO THIS DICT
         res_to_mongo = {
@@ -54,18 +51,7 @@ async def request_credential(response: Response, token: str, body: Offer, handle
             "state": "Credential Requested",
             "handler_url": handler_url
         }
-
-        #mongo_resp = mongo_setup_provider.collection.insert_one(res_to_mongo)
-        #print(mongo_resp.inserted_id)
-        #test = mongo_setup_provider.collection.find_one({"_id": ObjectId(mongo_resp.inserted_id)})
-        #print(test)
-
         mongo_setup_provider.collection.insert_one(res_to_mongo)
-        print(res_to_mongo["_id"])
-        print("\n")
-        #test = mongo_setup_provider.collection.find_one({"_id": ObjectId(res_to_mongo["_id"])})
-        #print(test)
-        #print(test["_id"])
 
     except:
         return "Unable to store Credential request on Database."
@@ -78,10 +64,11 @@ async def request_credential(response: Response, token: str, body: Offer, handle
                 "id": did,
                 "claims": body_dict["claims"]
             },
-            "handler_url": handler_url
+            "service_endpoint": os.environ["TRADING_PROVIDER_AGENT_CONTROLLER_URL"]
+            #"handler_url": handler_url
         }
-        print(res_to_admin)
-        print("\n")
+        #print(res_to_admin)
+        #print("\n")
         
         URL = os.environ["ADMIN_AGENT_CONTROLLER_URL"]
         requests.post(URL+"/issuer/request_credential_issue/"+str(res_to_mongo["_id"]), json=res_to_admin, timeout=60)
@@ -108,7 +95,6 @@ async def request_credential(response: Response, token: str, body: Offer, handle
         except:
             return "Unable to send request info to Holder's Handler"
 
-        #response.status_code = status.HTTP_201_CREATED
         return client_res
         
     except:
@@ -118,9 +104,10 @@ async def request_credential(response: Response, token: str, body: Offer, handle
 async def update_did_state(request_id: str, body: dict, response: Response):
     #UPDATE MONGO RECORD
     try:
-        mongo_setup_provider.collection.find_one_and_update({'_id': ObjectId(request_id)}, {'$set': {"state": "Credential Issued"}}) # UPDATE REQUEST RECORD FROM MONGO
+        #print(body)
+        mongo_setup_provider.collection.find_one_and_update({'_id': ObjectId(request_id)}, {'$set': {"state": "Credential Issued", "credential_definition_id": body["credential_definition_id"]}}) # UPDATE REQUEST RECORD FROM MONGO
         subscriber = mongo_setup_provider.collection.find_one({"_id": ObjectId(request_id)})
-        print(subscriber["handler_url"])
+        #print(subscriber["handler_url"])
     except:
         return "Unable to update Mongo record"
     

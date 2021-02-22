@@ -7,9 +7,9 @@ import json
 #Database Setup
 from app.db import mongo_setup_provider
 #Connection First
-from app.bootstrap import setup_issuer, setup_verifier
+from app.bootstrap import setup_verifier #setup_issuer,
 #Setup VC Schema
-from app.bootstrap import setup_vc_schema
+#from app.bootstrap import setup_vc_schema
 #After Auth token 
 from app.authentication import authentication
 
@@ -38,7 +38,3 @@ app.include_router(holder.router)
 def redirect_main():
     response = RedirectResponse(url='/docs')
     return response
-
-#@app.get("/items/{item_id}")
-#def read_item(item_id: int, q: Optional[str] = None):
-#    return {"item_id": item_id, "q": q}

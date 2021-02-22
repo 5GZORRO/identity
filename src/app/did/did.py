@@ -6,7 +6,7 @@ import requests, json
 from pydantic import BaseModel, HttpUrl
 
 #Connection First
-from app.bootstrap import setup_issuer, setup_verifier
+#from app.bootstrap import setup_issuer, setup_verifier
 #After Auth token 
 from app.authentication import authentication
 
@@ -32,8 +32,8 @@ async def create_did(did: str, verkey: str, handler_url: Optional[str] = None): 
 
 @router.get("/read")
 async def read_did():
-    #return "Awaiting Implementation"
-    return "ISSUER conn_id: " + setup_issuer.connection_id + "; VERIFIER conn_id: " + setup_verifier.connection_id + "; ADMIN id_token: " + authentication.id_token
+    return "Awaiting Implementation"
+    #return "ISSUER conn_id: " + setup_issuer.connection_id + "; VERIFIER conn_id: " + setup_verifier.connection_id + "; ADMIN id_token: " + authentication.id_token
 
 @router.post("/register")
 async def register_did():

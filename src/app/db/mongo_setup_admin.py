@@ -8,15 +8,8 @@ except:
 	print("Could not connect to MongoDB")
 	sys.exit() 
 
-# database name: config
-db = conn.config 
+# database name: administrator
+db = conn.administrator 
 
 # Created or Switched to collection names: offers
 collection = db.offers
-
-#data={
-#    "teste":"ressd1"
-#}
-
-#rec_id = collection.insert_one(data)
-#print(rec_id.inserted_id)
