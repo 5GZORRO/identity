@@ -105,7 +105,7 @@ paths:
       requestBody:
         content:
           application/json:
-            schema:
+            example:
               stakeholderPlatforms: string
               stakeholderRoles: object
       responses:
@@ -139,7 +139,7 @@ paths:
       requestBody:
         content:
           application/json:
-            schema:
+            example:
               type: string
               claims: object
       responses:
