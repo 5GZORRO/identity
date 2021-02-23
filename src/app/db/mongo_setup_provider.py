@@ -13,3 +13,6 @@ db = conn.provider
 
 # Created or Switched to collection names: offers
 collection = db.offers
+
+# Collection for: stakeholder
+stakeholder_col = db.stakeholder

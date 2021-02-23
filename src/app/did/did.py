@@ -8,7 +8,7 @@ from pydantic import BaseModel, HttpUrl
 #Connection First
 #from app.bootstrap import setup_issuer, setup_verifier
 #After Auth token 
-from app.authentication import authentication
+#from app.authentication import authentication
 
 #from app import test_comm_between_agent
 #from ..src/authentication import setup_i

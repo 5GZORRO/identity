@@ -14,6 +14,7 @@ router = APIRouter(
     tags=["issuer"]
 )
 
+##### Credential Issuing Classes #####
 class ReqCred(BaseModel):
     type: str
     credentialSubject: dict
@@ -27,13 +28,32 @@ class IssueCred(BaseModel):
     service_endpoint: str
     #handler_url: str
 
+
+##### Stakeholder Registry Classes #####
+class ReqStakeCred(BaseModel):
+    stakeholderClaim: dict
+    service_endpoint: str
+
+class IssueStakeCred(BaseModel):
+    holder_request_id: str
+    stakeholderClaim: dict
+    service_endpoint: str
+
+
 header = {
     'Content-Type': 'application/json'        
 }
 
 ####################### Verifiable Credentials Management #######################
-@router.post("/request_credential_issue/{request_id}") #, include_in_schema=False 
+@router.post("/request_credential_issue/{request_id}", include_in_schema=False)
 async def request_credential_issue(request_id: str, response: Response, body: ReqCred):
+    # SETUP VC SCHEMA
+    try:
+        setup_vc_schema.vc_setup()
+        print(setup_vc_schema.cred_def_id)
+    except:
+        return "Unable to setup Verifiable Credential Schema"
+
     # CHECK FOR REQUEST RECORD
     test = mongo_setup_admin.collection.find_one({"holder_request_id": request_id})
     if test != None:
@@ -78,7 +98,6 @@ async def request_credential_issue(request_id: str, response: Response, body: Re
     
     except:
         return "Unable to connect to Admin Handler"
-
 
 @router.post("/issue_requested_credential/{request_id}", status_code=201)
 async def issue_requested_credential(request_id: str, response: Response, body: IssueCred): #token: str,
@@ -158,10 +177,10 @@ async def issue_requested_credential(request_id: str, response: Response, body: 
         return "Unable to connect to Issuer Agent"
 
 @router.get("/read_credential")
-async def read_credential(response: Response, token: str, cred_id: str):
-    if token != authentication.id_token:
-        response.status_code = status.HTTP_401_UNAUTHORIZED
-        return "Invalid ID Token"
+async def read_credential(response: Response, cred_id: str): #token: str,
+    #if token != authentication.id_token:
+    #    response.status_code = status.HTTP_401_UNAUTHORIZED
+    #    return "Invalid ID Token"
 
     try:
         URL = os.environ["HOLDER_AGENT_URL"]
@@ -173,10 +192,10 @@ async def read_credential(response: Response, token: str, cred_id: str):
         return "Unable to fetch specific Marketplace Credential"
 
 @router.get("/read_credential/all")
-async def read_all_credentials(response: Response, token: str):
-    if token != authentication.id_token:
-        response.status_code = status.HTTP_401_UNAUTHORIZED
-        return "Invalid ID Token"
+async def read_all_credentials(response: Response): #, token: str
+    #if token != authentication.id_token:
+    #    response.status_code = status.HTTP_401_UNAUTHORIZED
+    #    return "Invalid ID Token"
 
     try:
         URL = os.environ["HOLDER_AGENT_URL"]
@@ -198,3 +217,149 @@ async def read_revoked_credential():
 @router.delete("/remove")
 async def remove_credential():
     return "Awaiting Implementation"
+
+
+####################### Stakeholder Registration Management #######################
+@router.post("/request_stakeholder_issue/{request_id}", include_in_schema=False)
+async def request_stakeholder_issue(request_id: str, response: Response, body: ReqStakeCred):
+    # SETUP ISSUER CONNECTION
+    try:
+        setup_issuer.issuer_connection()
+        print(setup_issuer.connection_id)
+    except:
+        return "Unable to establish Issuer Connection"
+
+    # SETUP AUTH SCHEMA
+    try:
+        authentication.stakeholder_cred_setup()
+        print(authentication.cred_def_id)
+    except:
+        return "Unable to setup Stakeholder Schema"
+    
+    # CHECK FOR REQUEST RECORD
+    test = mongo_setup_admin.stakeholder_col.find_one({"holder_request_id": request_id})
+    if test != None:
+        if test["state"] == "Credential Issued":
+            return "Credential Request was already issued"
+
+    # SUBMIT REQUEST TO ADMIN HANDLER
+    try:
+        body_dict = body.dict()
+        
+        res_to_insert_db = {
+            "holder_request_id": request_id,
+            "stakeholderClaim": {
+                "stakeholderPlatforms": body_dict["stakeholderClaim"]["stakeholderPlatforms"],
+                "stakeholderRoles": {
+                    "role": body_dict["stakeholderClaim"]["stakeholderRoles"]["role"],
+                    "assets": body_dict["stakeholderClaim"]["stakeholderRoles"]["assets"]
+                },
+                "did": body_dict["stakeholderClaim"]["did"],
+                "verkey": body_dict["stakeholderClaim"]["verkey"]
+            },
+            "state": "Credential Requested"
+            #"handler_url": body_dict["handler_url"]
+            #"service_endpoint": body_dict["service_endpoint"]
+        }
+
+        mongo_setup_admin.stakeholder_col.insert_one(res_to_insert_db)
+
+        res_to_admin_handler = {
+            "_id": str(res_to_insert_db["_id"]),
+            "holder_request_id": request_id,
+            "stakeholderClaim": {
+                "stakeholderPlatforms": body_dict["stakeholderClaim"]["stakeholderPlatforms"],
+                "stakeholderRoles": {
+                    "role": body_dict["stakeholderClaim"]["stakeholderRoles"]["role"],
+                    "assets": body_dict["stakeholderClaim"]["stakeholderRoles"]["assets"]
+                },
+                "did": body_dict["stakeholderClaim"]["did"],
+                "verkey": body_dict["stakeholderClaim"]["verkey"]
+            },
+            "service_endpoint": body_dict["service_endpoint"]
+        }
+        #print(res_to_admin_handler)
+        
+        admin_handler_url = os.environ["HANDLER_ADMIN_URL"]
+        requests.post(admin_handler_url+"/stakeholder/receive", headers=header, json=res_to_admin_handler, timeout=60)
+        #print(res.json())
+
+        return res_to_admin_handler
+    
+    except:
+        return "Unable to connect to Admin Handler"
+
+@router.post("/issue_stakeholder/{request_id}", status_code=201)
+async def issue_stakeholder(request_id: str, response: Response, body: IssueStakeCred):
+    # CHECK FOR REQUEST RECORD
+    try:
+        test = mongo_setup_admin.stakeholder_col.find_one({"_id": ObjectId(request_id)})
+        #print(test)
+    except:
+        return "Stakeholder Request doesn't exist in Database"
+
+    # ISSUE CREDENTIAL
+    try:
+        body_dict = body.dict()
+
+        URL = os.environ["ISSUER_AGENT_URL"]
+        
+        # Configure Stakeholder to be registered
+        issue_cred = {
+            "cred_def_id": authentication.cred_def_id,
+            "credential_proposal": {
+                "attributes": [
+                    {
+                        "name": "stakeholderClaim",
+                        "value": str(body_dict["stakeholderClaim"])
+                    }
+                    
+                ]
+            }
+        }
+        #print(issue_cred)
+
+        final_resp = requests.post(URL+"/issue-credential/create", data=json.dumps(issue_cred), headers=header, timeout=60)
+        #print(final_resp.text)
+        cred_info = json.loads(final_resp.text)
+        id_token = cred_info["credential_exchange_id"]
+
+        #print(cred_info)
+        #print(id_token)
+
+        if cred_info["state"] == "offer_sent":
+            # SUBSCRIBE TO AGENT RESPONSE
+            try:
+                # UPDATE REQUEST RECORD FROM MONGO
+                mongo_setup_admin.stakeholder_col.find_one_and_update({'_id': ObjectId(request_id)}, {'$set': {"state": "Credential Issued"}})
+                #mongo_setup.stakeholder_col.remove({"_id": ObjectId(request_id)})
+
+                resp_cred = {
+                    #"credential_exchange_id": cred_info["credential_exchange_id"],
+                    "id_token": id_token,
+                    "credential_definition_id": cred_info["credential_definition_id"],
+                    "credential_offer_dict": cred_info["credential_offer_dict"],
+                    "created_at": cred_info["created_at"],
+                    "updated_at": cred_info["updated_at"],
+                    "schema_id": cred_info["schema_id"],
+                    "state": "credential_acked"
+                }
+            
+            except:        
+                return "Unable to subscribe to response"
+
+            # NOTIFY HOLDER AGENT
+            #try:
+            holder_url = body_dict["service_endpoint"]
+            #print(holder_url)
+            requests.post(holder_url+"/holder/update_stakeholder_state/"+str(body_dict["holder_request_id"]), json=resp_cred, timeout=60)
+            #except:
+            #    return "Unable to notify Holder"
+            
+            return resp_cred
+
+        else:
+            return "Unable to subscribe to Credential response"
+    
+    except:
+        return "Unable to connect to Issuer Agent"

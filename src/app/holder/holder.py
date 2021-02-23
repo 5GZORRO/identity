@@ -5,7 +5,7 @@ import requests, json, sys, os
 
 from bson import ObjectId
 
-from app.authentication import authentication
+#from app.authentication import authentication
 from app.db import mongo_setup_provider
 
 router = APIRouter(
@@ -17,14 +17,129 @@ class Offer(BaseModel):
     type: str
     claims: dict
 
+class SHattributes(BaseModel):
+    role: str
+    assets: str
+
+class Stakeholder(BaseModel):
+    stakeholderPlatforms: str
+    stakeholderRoles: SHattributes
+
 header = {
     'Content-Type': 'application/json'        
 }
 
+
+####################### Stakeholder Registration #######################
+@router.post("/register_stakeholder", status_code=201)
+async def register_stakeholder(response: Response, body: Stakeholder, handler_url: str):
+    # PRIVATE DID
+    try:
+        holder_url = os.environ["HOLDER_AGENT_URL"]
+        resp = requests.post(holder_url+"/wallet/did/create", timeout=30)
+        result = resp.json()
+        did = result["result"]["did"]
+        verkey = result["result"]["verkey"]
+    except:
+        return "Unable to create wallet DID."
+
+    
+    # STORE REQUEST ON MONGO
+    try:
+        body_dict = body.dict()
+
+        # MONGO WILL ADD _id TO THIS DICT
+        res_to_mongo = {
+            "stakeholderClaim": {
+                "stakeholderPlatforms": body_dict["stakeholderPlatforms"],
+                "stakeholderRoles": {
+                    "role": body_dict["stakeholderRoles"]["role"],
+                    "assets": body_dict["stakeholderRoles"]["assets"]
+                },
+                "did": did,
+                "verkey": verkey
+            },
+            "state": "Credential Requested",
+            "handler_url": handler_url
+        }
+
+        mongo_setup_provider.stakeholder_col.insert_one(res_to_mongo)
+
+    except:
+        return "Unable to store Credential request on Database."
+    
+
+    # SEND TO ADMIN
+    try:
+        res_to_admin = {
+            "stakeholderClaim": {
+                "stakeholderPlatforms": body_dict["stakeholderPlatforms"],
+                "stakeholderRoles": {
+                    "role": body_dict["stakeholderRoles"]["role"],
+                    "assets": body_dict["stakeholderRoles"]["assets"]
+                },
+                "did": did,
+                "verkey": verkey
+            },
+            "service_endpoint": os.environ["TRADING_PROVIDER_AGENT_CONTROLLER_URL"]
+        }
+        #print(res_to_admin)
+        #print("\n")
+        
+        URL = os.environ["ADMIN_AGENT_CONTROLLER_URL"]
+        requests.post(URL+"/issuer/request_stakeholder_issue/"+str(res_to_mongo["_id"]), json=res_to_admin, timeout=60)
+       
+
+        client_res = {
+            "_id": str(res_to_mongo["_id"]),
+            "stakeholderClaim": {
+                "stakeholderPlatforms": body_dict["stakeholderPlatforms"],
+                "stakeholderRoles": {
+                    "role": body_dict["stakeholderRoles"]["role"],
+                    "assets": body_dict["stakeholderRoles"]["assets"]
+                },
+                "did": did,
+                "verkey": verkey
+            },
+            "state": "Credential Requested",
+            "handler_url": handler_url
+        }
+
+        # SEND TO HOLDER HANDLER
+        try:
+            holder_handler_resp = requests.post(handler_url, headers=header, json=client_res, timeout=30)
+            holder_body = resp.json()
+        except:
+            return "Unable to send request info to Holder's Handler"
+
+        return client_res
+        
+    except:
+        return "Unable to perform Stakeholder registration request."
+
+@router.post("/update_stakeholder_state/{request_id}", include_in_schema=False)
+async def update_stakeholder_state(request_id: str, body: dict, response: Response):
+    #UPDATE MONGO RECORD
+    try:
+        mongo_setup_provider.stakeholder_col.find_one_and_update({'_id': ObjectId(request_id)}, {'$set': {"state": "Credential Issued"}}) # UPDATE REQUEST RECORD FROM MONGO
+        subscriber = mongo_setup_provider.stakeholder_col.find_one({"_id": ObjectId(request_id)})
+        global id_token
+        id_token = body["id_token"]
+        print("id_token: "+ str(id_token))
+    except:
+        return "Unable to update Mongo record"
+    
+    # SEND REQUEST RECORD TO HOLDER HANDLER
+    try:
+        requests.post(subscriber["handler_url"], headers=header, json=body, timeout=30)
+    except:
+        return "Unable to send info to Holder Handler"
+
+
 ####################### Verifiable Credentials Management #######################
 @router.post("/create_did", status_code=201)
 async def request_credential(response: Response, token: str, body: Offer, handler_url: str):
-    if token != authentication.id_token:
+    if token != id_token:
         response.status_code = status.HTTP_401_UNAUTHORIZED
         return "Invalid ID Token"
 
@@ -119,7 +234,7 @@ async def update_did_state(request_id: str, body: dict, response: Response):
 
 @router.get("/read_did_status")
 async def read_credential_status(response: Response, token: str, request_id: str):
-    if token != authentication.id_token:
+    if token != id_token:
         response.status_code = status.HTTP_401_UNAUTHORIZED
         return "Invalid ID Token"
 
@@ -141,7 +256,7 @@ async def read_credential_status(response: Response, token: str, request_id: str
 
 @router.get("/read_did")
 async def read_credential(response: Response, token: str, cred_id: str):
-    if token != authentication.id_token:
+    if token != id_token:
         response.status_code = status.HTTP_401_UNAUTHORIZED
         return "Invalid ID Token"
 
@@ -156,7 +271,7 @@ async def read_credential(response: Response, token: str, cred_id: str):
 
 @router.get("/read_did/all")
 async def read_all_credentials(response: Response, token: str, handler_url: Optional[str] = None):
-    if token != authentication.id_token:
+    if token != id_token:
         response.status_code = status.HTTP_401_UNAUTHORIZED
         return "Invalid ID Token"
 

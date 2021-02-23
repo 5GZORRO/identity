@@ -11,7 +11,7 @@ from app.bootstrap import setup_issuer, setup_verifier
 #Setup VC Schema
 from app.bootstrap import setup_vc_schema
 #After Auth token 
-#from app.authentication import authentication
+from app.authentication import authentication
 
 from app.did import did
 from app.issuer import issuer
