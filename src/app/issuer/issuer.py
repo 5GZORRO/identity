@@ -239,8 +239,8 @@ async def request_stakeholder_issue(request_id: str, response: Response, body: R
     # CHECK FOR REQUEST RECORD
     test = mongo_setup_admin.stakeholder_col.find_one({"holder_request_id": request_id})
     if test != None:
-        if test["state"] == "Credential Issued":
-            return "Credential Request was already issued"
+        if test["state"] == "Stakeholder Registered":
+            return "Stakeholder Request was already issued"
 
     # SUBMIT REQUEST TO ADMIN HANDLER
     try:
@@ -249,15 +249,20 @@ async def request_stakeholder_issue(request_id: str, response: Response, body: R
         res_to_insert_db = {
             "holder_request_id": request_id,
             "stakeholderClaim": {
-                "stakeholderPlatforms": body_dict["stakeholderClaim"]["stakeholderPlatforms"],
+                "governanceBoardDID": body_dict["stakeholderClaim"]["governanceBoardDID"],
+                "stakeholderServices": body_dict["stakeholderClaim"]["stakeholderServices"],
                 "stakeholderRoles": {
                     "role": body_dict["stakeholderClaim"]["stakeholderRoles"]["role"],
                     "assets": body_dict["stakeholderClaim"]["stakeholderRoles"]["assets"]
                 },
+                "stakeholderProfile": {
+                    "name": body_dict["stakeholderClaim"]["stakeholderProfile"]["name"],
+                    "address": body_dict["stakeholderClaim"]["stakeholderProfile"]["address"]
+                },
                 "did": body_dict["stakeholderClaim"]["did"],
                 "verkey": body_dict["stakeholderClaim"]["verkey"]
             },
-            "state": "Credential Requested"
+            "state": "Stakeholder Registration Requested"
             #"handler_url": body_dict["handler_url"]
             #"service_endpoint": body_dict["service_endpoint"]
         }
@@ -268,10 +273,15 @@ async def request_stakeholder_issue(request_id: str, response: Response, body: R
             "_id": str(res_to_insert_db["_id"]),
             "holder_request_id": request_id,
             "stakeholderClaim": {
-                "stakeholderPlatforms": body_dict["stakeholderClaim"]["stakeholderPlatforms"],
+                "governanceBoardDID": body_dict["stakeholderClaim"]["governanceBoardDID"],
+                "stakeholderServices": body_dict["stakeholderClaim"]["stakeholderServices"],
                 "stakeholderRoles": {
                     "role": body_dict["stakeholderClaim"]["stakeholderRoles"]["role"],
                     "assets": body_dict["stakeholderClaim"]["stakeholderRoles"]["assets"]
+                },
+                "stakeholderProfile": {
+                    "name": body_dict["stakeholderClaim"]["stakeholderProfile"]["name"],
+                    "address": body_dict["stakeholderClaim"]["stakeholderProfile"]["address"]
                 },
                 "did": body_dict["stakeholderClaim"]["did"],
                 "verkey": body_dict["stakeholderClaim"]["verkey"]
@@ -306,6 +316,7 @@ async def issue_stakeholder(request_id: str, response: Response, body: IssueStak
         
         # Configure Stakeholder to be registered
         issue_cred = {
+            "connection_id": setup_issuer.connection_id,
             "cred_def_id": authentication.cred_def_id,
             "credential_proposal": {
                 "attributes": [
@@ -319,7 +330,7 @@ async def issue_stakeholder(request_id: str, response: Response, body: IssueStak
         }
         #print(issue_cred)
 
-        final_resp = requests.post(URL+"/issue-credential/create", data=json.dumps(issue_cred), headers=header, timeout=60)
+        final_resp = requests.post(URL+"/issue-credential/send", data=json.dumps(issue_cred), headers=header, timeout=60)
         #print(final_resp.text)
         cred_info = json.loads(final_resp.text)
         id_token = cred_info["credential_exchange_id"]
@@ -331,7 +342,7 @@ async def issue_stakeholder(request_id: str, response: Response, body: IssueStak
             # SUBSCRIBE TO AGENT RESPONSE
             try:
                 # UPDATE REQUEST RECORD FROM MONGO
-                mongo_setup_admin.stakeholder_col.find_one_and_update({'_id': ObjectId(request_id)}, {'$set': {"state": "Credential Issued"}})
+                mongo_setup_admin.stakeholder_col.find_one_and_update({'_id': ObjectId(request_id)}, {'$set': {"state": "Stakeholder Registered"}})
                 #mongo_setup.stakeholder_col.remove({"_id": ObjectId(request_id)})
 
                 resp_cred = {
