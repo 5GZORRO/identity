@@ -14,7 +14,7 @@ env:
 
 jobs:
   publish_package_ISSUER: 
-    runs-on: test
+    runs-on: teste
     steps:
       - uses: actions/checkout@v2 
       # clone project
@@ -65,7 +65,7 @@ jobs:
 
   publish_package_HOLDER:
     needs: [publish_package_ISSUER]
-    runs-on: test
+    runs-on: teste
     steps:
       - uses: actions/checkout@v2 
 
