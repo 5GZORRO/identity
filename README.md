@@ -98,6 +98,8 @@ Reference: https://github.com/hyperledger/aries-cloudagent-python/blob/main/demo
 
 Git Repository: https://github.com/hyperledger/aries-cloudagent-python
 
+Note: Tested with the 0.5.6 version of aries-cloudagent
+
 Use below command to download code to your local machine:
 ```python
 git clone https://github.com/hyperledger/aries-cloudagent-python

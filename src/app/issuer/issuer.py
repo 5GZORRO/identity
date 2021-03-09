@@ -288,9 +288,11 @@ async def request_stakeholder_issue(request_id: str, response: Response, body: R
             },
             "service_endpoint": body_dict["service_endpoint"]
         }
-        #print(res_to_admin_handler)
-        
+        print(res_to_admin_handler)
+        print("\n")
         admin_handler_url = os.environ["HANDLER_ADMIN_URL"]
+        print(admin_handler_url)
+        
         requests.post(admin_handler_url+"/stakeholder/receive", headers=header, json=res_to_admin_handler, timeout=60)
         #print(res.json())
 
