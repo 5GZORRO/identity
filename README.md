@@ -122,8 +122,8 @@ Now perform the same for the Verifier Agent:
 ```
 Verifier Agent is running on port 8041.
 
-## Run Identity
-* **Identity requirements**: 
+## Run 5GZorro Agents
+* **Requirements**: 
   * Von-network running
   * Agents running
   * Mongo active

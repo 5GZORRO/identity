@@ -96,11 +96,11 @@ paths:
       #  description: "file to upload"
       #  required: false
       #  type: "file"
-      - name: "handler_url"
+      #- name: "handler_url"
       #  in: "path"
-        description: "handler url"
-        required: true
-        type: "string"
+      #  description: "handler url"
+      #  required: true
+      #  type: "string"
       #  format: "int64"
       requestBody:
         content:
@@ -125,11 +125,11 @@ paths:
       produces:
       - "application/json"
       parameters:
-      - name: "handler_url"
+      #- name: "handler_url"
       #  in: "path"
-        description: "handler url"
-        required: true
-        type: "string"
+      #  description: "handler url"
+      #  required: true
+      #  type: "string"
       #  format: "int64"
       - name: "token"
       #  in: "formData"
