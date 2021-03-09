@@ -23,7 +23,7 @@ jobs:
           port: 27017
       - name: Test mongo connection
         id: test_mongo_connection
-        run: "sudo mongo localhost:27017"
+        run: "sudo mongo 172.31.8.245:27017"
     
       - uses: actions/checkout@v2
       
