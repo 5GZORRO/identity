@@ -1,0 +1,19 @@
+version: '3'
+services: 
+    handler_example:
+        build: ../handler_example
+        container_name: handler_example
+        #networks:
+        #    front:
+        #        ipv4_address: 172.220.15.0
+        command: python3 handler.py
+        ports:
+            - "4800:4800"
+        restart: always
+        environment:
+            ADMIN_CONTROLLER_URL: ${ADMIN_CONTROLLER_URL_DEV}
+
+#networks:
+# front:
+#    external:
+#      name: multi-host-network
