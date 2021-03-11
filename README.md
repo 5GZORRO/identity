@@ -6,7 +6,7 @@ Repository of 5G ZORRO Identity and Permissions Manager components source code.
   * Git 
   * Docker
   * Docker-compose
-  * Mongo
+  * Mongo (optional)
   * Python
 
 ## Pre-Requesites 
@@ -57,7 +57,9 @@ docker-compose --version
 ```
 Docker compose’s version should be shown.
 
-### Install MongoBD
+### Install MongoBD (optional)
+
+This section is aimed for the user that wants to run his own local MongoDB instance.
 
 Reference: https://www.digitalocean.com/community/tutorials/how-to-install-mongodb-on-ubuntu-18-04-source
 

@@ -23,6 +23,7 @@ with open('app/openapi/openapi_admin.json') as json_file:
 
 
 app = FastAPI(
+    docs_url="/admin",
     openapi_tags=tags_metadata,
     #openapi_url="/openapi.json",
     title="Identity & Permissions Manager - Admin Agent API",
@@ -38,5 +39,5 @@ app.include_router(verifier.router)
 
 @app.get("/", include_in_schema=False)
 def redirect_main():
-    response = RedirectResponse(url='/docs')
+    response = RedirectResponse(url='/admin')
     return response

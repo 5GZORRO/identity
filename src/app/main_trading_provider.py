@@ -22,6 +22,7 @@ with open('app/openapi/openapi_trading_provider.json') as json_file:
 
 
 app = FastAPI(
+    docs_url="/provider",
     openapi_tags=tags_metadata,
     #openapi_url="/openapi.json",
     title="Identity & Permissions Manager - Trading Provider Agent API",
@@ -36,5 +37,5 @@ app.include_router(holder.router)
 
 @app.get("/", include_in_schema=False)
 def redirect_main():
-    response = RedirectResponse(url='/docs')
+    response = RedirectResponse(url='/provider')
     return response

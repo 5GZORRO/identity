@@ -91,7 +91,7 @@ async def request_credential_issue(request_id: str, response: Response, body: Re
         #print(res_to_admin_handler)
         
         admin_handler_url = os.environ["HANDLER_ADMIN_URL"]
-        requests.post(admin_handler_url+"/receive", headers=header, json=res_to_admin_handler, timeout=60)
+        requests.post(admin_handler_url+"/handler_admin/receive", headers=header, json=res_to_admin_handler, timeout=60)
         #print(res.json())
 
         return res_to_admin_handler
@@ -288,12 +288,10 @@ async def request_stakeholder_issue(request_id: str, response: Response, body: R
             },
             "service_endpoint": body_dict["service_endpoint"]
         }
-        print(res_to_admin_handler)
-        print("\n")
-        admin_handler_url = os.environ["HANDLER_ADMIN_URL"]
-        print(admin_handler_url)
+        #print(res_to_admin_handler)
         
-        requests.post(admin_handler_url+"/stakeholder/receive", headers=header, json=res_to_admin_handler, timeout=60)
+        admin_handler_url = os.environ["HANDLER_ADMIN_URL"]        
+        requests.post(admin_handler_url+"/handler_admin/stakeholder/receive", headers=header, json=res_to_admin_handler, timeout=60)
         #print(res.json())
 
         return res_to_admin_handler

@@ -1,26 +1,22 @@
 # Demo Handler for Stakeholder and DID acceptance
 * **Requirements**: 
   * 5GZorro Agents Running
-  * Python
-  * Flask
+  * Docker
   * dot-env
 
 To run this handler example, simply type in the command line:
 ```
-python handler.py
+docker-compose up --build
+```
+To stop the project, simply type:
+```
+docker-compose down
 ```
 The handler should be running on port 4800.
 
 ## Pre-Requisites
-### Install Flask
-```
-pip install Flask
-```
-
-### Install dot-env
-```
-pip install Flask-DotEnv
-```
+### Install and config Docker
+(Tutorial of configuration available in main ReadMe)
 
 ## Demo Handler Operations
 ### Accept Stakeholder

@@ -105,7 +105,7 @@ async def register_stakeholder(response: Response, body: Stakeholder):
         #print("\n")
         
         URL = os.environ["ADMIN_AGENT_CONTROLLER_URL"]
-        requests.post(URL+"/issuer/request_stakeholder_issue/"+str(res_to_mongo["_id"]), json=res_to_admin, timeout=120)
+        requests.post(URL+"/issuer/request_stakeholder_issue/"+str(res_to_mongo["_id"]), json=res_to_admin, timeout=60)
        
 
         client_res = {
