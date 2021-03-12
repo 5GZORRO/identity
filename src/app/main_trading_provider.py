@@ -24,7 +24,7 @@ with open('app/openapi/openapi_trading_provider.json') as json_file:
 app = FastAPI(
     docs_url="/provider",
     openapi_tags=tags_metadata,
-    #openapi_url="/openapi.json",
+    openapi_url="/provider/openapi.json",
     title="Identity & Permissions Manager - Trading Provider Agent API",
     description="""This is a project able to supply the mechanisms required for generating unique identifiers in 5GZORRO ecosystem, recognising communicating endpoints, 
         identifying and authenticating entities, services, and organizations, and authorising consumer requests to access a preserved services and resources."""
@@ -35,7 +35,7 @@ app.include_router(did.router)
 app.include_router(holder.router)
 
 
-@app.get("/", include_in_schema=False)
-def redirect_main():
-    response = RedirectResponse(url='/provider')
-    return response
+#@app.get("/", include_in_schema=False)
+#def redirect_main():
+#    response = RedirectResponse(url='/provider')
+#    return response

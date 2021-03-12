@@ -1,36 +1,58 @@
 version: '3'
-services:
+services: 
     admin_agent:
-        #build: ./
+        build: ./
         container_name: admin_agent
-        # command: uvicorn app.main_admin:app --reload --workers 1 --host 0.0.0.0 --port 8000
-        image: docker.pkg.github.com/5gzorro/identity/5g-zorro-teste-agent_issuer:1.0.0
+        #networks:
+        #    front:
+        #        ipv4_address: 172.220.18.0
+        command: uvicorn app.main_admin:app --reload --workers 1 --host 0.0.0.0 --port 8000
         ports:
             - "6200:8000"
-        expose:
-            - "6200"
         restart: always
         env_file:
             - .env
         depends_on:
             - mongodb_container
+    
+    #regulator_agent:
+    #    build: ../src/Regulator_Agent
+    #    container_name: regulator_agent
+    #    command: uvicorn app.main:app --reload --workers 1 --host 0.0.0.0 --port 8000
+    #    ports:
+    #        - "6400:8000"
+    #    restart: always
+    #    env_file:
+    #        - ../src/.env
 
+    #trading_consumer_agent:
+    #    build: ../src/Trading_Consumer_Agent
+    #    container_name: trading_consumer_agent
+    #    command: uvicorn app.main:app --reload --workers 1 --host 0.0.0.0 --port 8000
+    #    ports:
+    #        - "6600:8000"
+    #    restart: always
+    #    env_file:
+    #        - ../src/.env
+    
     trading_provider_agent:
+        build: ./
         container_name: trading_provider_agent
-        image: docker.pkg.github.com/5gzorro/identity/5g-zorro-teste-agent_holder:1.0.0
+        command: uvicorn app.main_trading_provider:app --reload --workers 1 --host 0.0.0.0 --port 8000
         ports:
             - "6800:8000"
-        expose:
-            - "6800"
         restart: always
         env_file:
             - .env
         depends_on:
         #    - mongodb_trade_provider_container
             - mongodb_container
-
+    
     mongodb_container:
         image: mongo:latest
+        #environment:
+        #    MONGO_INITDB_ROOT_USERNAME: root
+        #    MONGO_INITDB_ROOT_PASSWORD: rootpassword
         ports:
             - 27017:27017
         volumes:
@@ -45,3 +67,8 @@ services:
 
 volumes:
     mongodb_data_container:
+        
+#networks:
+#  front:
+#    external:
+#      name: multi-host-network
