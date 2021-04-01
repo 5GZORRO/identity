@@ -48,16 +48,19 @@ def handler_stakeholder_sender():
         "stakeholderClaim": {
             "governanceBoardDID": stake_value["stakeholderClaim"]["governanceBoardDID"],
             "stakeholderServices": stake_value["stakeholderClaim"]["stakeholderServices"],
-            "stakeholderRoles": {
-                "role": stake_value["stakeholderClaim"]["stakeholderRoles"]["role"],
-                "assets": stake_value["stakeholderClaim"]["stakeholderRoles"]["assets"]
-            },
+            #"stakeholderRoles": {
+            #    "role": stake_value["stakeholderClaim"]["stakeholderRoles"]["role"],
+            #    "assets": stake_value["stakeholderClaim"]["stakeholderRoles"]["assets"]
+            #},
+            "stakeholderRoles": stake_value["stakeholderClaim"]["stakeholderRoles"],
             "stakeholderProfile": {
                 "name": stake_value["stakeholderClaim"]["stakeholderProfile"]["name"],
-                "address": stake_value["stakeholderClaim"]["stakeholderProfile"]["address"]
+                "address": stake_value["stakeholderClaim"]["stakeholderProfile"]["address"],
+                "notificationMethod": stake_value["stakeholderClaim"]["stakeholderProfile"]["notificationMethod"]
             },
-            "did": stake_value["stakeholderClaim"]["did"],
-            "verkey": stake_value["stakeholderClaim"]["verkey"]
+            "stakeholderDID": stake_value["stakeholderClaim"]["stakeholderDID"]
+            #"did": stake_value["stakeholderClaim"]["did"],
+            #"verkey": stake_value["stakeholderClaim"]["verkey"]
         },
         "service_endpoint": stake_value["service_endpoint"]
     }

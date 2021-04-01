@@ -47,6 +47,13 @@ header = {
 ####################### Verifiable Credentials Management #######################
 @router.post("/request_credential_issue/{request_id}", include_in_schema=False)
 async def request_credential_issue(request_id: str, response: Response, body: ReqCred):
+    # SETUP ISSUER CONNECTION
+    try:
+        setup_issuer.issuer_connection()
+        print(setup_issuer.connection_id)
+    except:
+        return "Unable to establish Issuer Connection"
+
     # SETUP VC SCHEMA
     try:
         setup_vc_schema.vc_setup()
@@ -251,16 +258,19 @@ async def request_stakeholder_issue(request_id: str, response: Response, body: R
             "stakeholderClaim": {
                 "governanceBoardDID": body_dict["stakeholderClaim"]["governanceBoardDID"],
                 "stakeholderServices": body_dict["stakeholderClaim"]["stakeholderServices"],
-                "stakeholderRoles": {
-                    "role": body_dict["stakeholderClaim"]["stakeholderRoles"]["role"],
-                    "assets": body_dict["stakeholderClaim"]["stakeholderRoles"]["assets"]
-                },
+                #"stakeholderRoles": {
+                #    "role": body_dict["stakeholderClaim"]["stakeholderRoles"]["role"],
+                #    "assets": body_dict["stakeholderClaim"]["stakeholderRoles"]["assets"]
+                #},
+                "stakeholderRoles": body_dict["stakeholderClaim"]["stakeholderRoles"],
                 "stakeholderProfile": {
                     "name": body_dict["stakeholderClaim"]["stakeholderProfile"]["name"],
-                    "address": body_dict["stakeholderClaim"]["stakeholderProfile"]["address"]
+                    "address": body_dict["stakeholderClaim"]["stakeholderProfile"]["address"],
+                    "notificationMethod": body_dict["stakeholderClaim"]["stakeholderProfile"]["notificationMethod"]
                 },
-                "did": body_dict["stakeholderClaim"]["did"],
-                "verkey": body_dict["stakeholderClaim"]["verkey"]
+                "stakeholderDID": body_dict["stakeholderClaim"]["stakeholderDID"]
+                #"did": body_dict["stakeholderClaim"]["did"],
+                #"verkey": body_dict["stakeholderClaim"]["verkey"]
             },
             "state": "Stakeholder Registration Requested"
             #"handler_url": body_dict["handler_url"]
@@ -275,16 +285,19 @@ async def request_stakeholder_issue(request_id: str, response: Response, body: R
             "stakeholderClaim": {
                 "governanceBoardDID": body_dict["stakeholderClaim"]["governanceBoardDID"],
                 "stakeholderServices": body_dict["stakeholderClaim"]["stakeholderServices"],
-                "stakeholderRoles": {
-                    "role": body_dict["stakeholderClaim"]["stakeholderRoles"]["role"],
-                    "assets": body_dict["stakeholderClaim"]["stakeholderRoles"]["assets"]
-                },
+                #"stakeholderRoles": {
+                #    "role": body_dict["stakeholderClaim"]["stakeholderRoles"]["role"],
+                #    "assets": body_dict["stakeholderClaim"]["stakeholderRoles"]["assets"]
+                #},
+                "stakeholderRoles": body_dict["stakeholderClaim"]["stakeholderRoles"],
                 "stakeholderProfile": {
                     "name": body_dict["stakeholderClaim"]["stakeholderProfile"]["name"],
-                    "address": body_dict["stakeholderClaim"]["stakeholderProfile"]["address"]
+                    "address": body_dict["stakeholderClaim"]["stakeholderProfile"]["address"],
+                    "notificationMethod": body_dict["stakeholderClaim"]["stakeholderProfile"]["notificationMethod"]
                 },
-                "did": body_dict["stakeholderClaim"]["did"],
-                "verkey": body_dict["stakeholderClaim"]["verkey"]
+                "stakeholderDID": body_dict["stakeholderClaim"]["stakeholderDID"]
+                #"did": body_dict["stakeholderClaim"]["did"],
+                #"verkey": body_dict["stakeholderClaim"]["verkey"]
             },
             "service_endpoint": body_dict["service_endpoint"]
         }
@@ -342,7 +355,7 @@ async def issue_stakeholder(request_id: str, response: Response, body: IssueStak
             # SUBSCRIBE TO AGENT RESPONSE
             try:
                 # UPDATE REQUEST RECORD FROM MONGO
-                mongo_setup_admin.stakeholder_col.find_one_and_update({'_id': ObjectId(request_id)}, {'$set': {"state": "Stakeholder Registered"}})
+                mongo_setup_admin.stakeholder_col.find_one_and_update({'_id': ObjectId(request_id)}, {'$set': {"state": "Stakeholder Registered", "id_token": id_token}})
                 #mongo_setup.stakeholder_col.remove({"_id": ObjectId(request_id)})
 
                 resp_cred = {
