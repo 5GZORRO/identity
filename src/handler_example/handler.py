@@ -24,6 +24,7 @@ def handler_sender():
             "id": value["credentialSubject"]["id"],
             "claims": value["credentialSubject"]["claims"]
         },
+        "timestamp": value["timestamp"],
         "service_endpoint": value["service_endpoint"]
     }
     
@@ -62,6 +63,7 @@ def handler_stakeholder_sender():
             #"did": stake_value["stakeholderClaim"]["did"],
             #"verkey": stake_value["stakeholderClaim"]["verkey"]
         },
+        "timestamp": stake_value["timestamp"],
         "service_endpoint": stake_value["service_endpoint"]
     }
     

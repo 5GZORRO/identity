@@ -1,7 +1,7 @@
 from typing import Optional, List
 from fastapi import APIRouter, Response, status
 from pydantic import BaseModel
-import requests, json, sys, os
+import requests, json, sys, os, time
 from enum import Enum
 
 from bson import ObjectId
@@ -60,6 +60,7 @@ class SHProfile(BaseModel):
     notificationMethod: SHNotify
 
 class Stakeholder(BaseModel):
+    key: str
     governanceBoardDID: str
     #stakeholderServices: list = []
     stakeholderServices: List[SHServices]
@@ -68,6 +69,11 @@ class Stakeholder(BaseModel):
     stakeholderProfile: SHProfile
     handler_url: str
 
+
+class ReadStakeDID(BaseModel):
+    stakeholderDID: str
+
+
 header = {
     'Content-Type': 'application/json'        
 }
@@ -75,10 +81,15 @@ header = {
 
 ####################### Stakeholder Registration #######################
 @router.post("/register_stakeholder", status_code=201)
-async def register_stakeholder(response: Response, key: str, body: Stakeholder):
-    if key != holder_key.verkey:
-        response.status_code = status.HTTP_401_UNAUTHORIZED
-        return "Invalid Verification Key"
+async def register_stakeholder(response: Response, body: Stakeholder): #key: str,
+    # AUTH
+    try:
+        body_dict = body.dict()
+        if body_dict["key"] != holder_key.verkey:
+            response.status_code = status.HTTP_401_UNAUTHORIZED
+            return "Invalid Verification Key"
+    except:
+        return "Unable to authenticate used key."
 
     # PRIVATE DID
     try:
@@ -93,7 +104,7 @@ async def register_stakeholder(response: Response, key: str, body: Stakeholder):
     
     # STORE REQUEST ON MONGO
     try:
-        body_dict = body.dict()
+        epoch_ts = str(int(time.time()))
 
         # MONGO WILL ADD _id TO THIS DICT
         res_to_mongo = {
@@ -114,6 +125,7 @@ async def register_stakeholder(response: Response, key: str, body: Stakeholder):
                 #"did": did,
                 #"verkey": verkey
             },
+            "timestamp": epoch_ts,
             "state": "Stakeholder Registration Requested",
             "handler_url": body_dict["handler_url"]
         }
@@ -144,6 +156,7 @@ async def register_stakeholder(response: Response, key: str, body: Stakeholder):
                 #"did": did,
                 #"verkey": verkey
             },
+            "timestamp": epoch_ts,
             "service_endpoint": os.environ["TRADING_PROVIDER_AGENT_CONTROLLER_URL"]
         }
         #print(res_to_admin)
@@ -172,6 +185,7 @@ async def register_stakeholder(response: Response, key: str, body: Stakeholder):
                 #"did": did,
                 #"verkey": verkey
             },
+            "timestamp": epoch_ts,
             "state": "Stakeholder Registration Requested",
             "handler_url": body_dict["handler_url"]
         }
@@ -192,7 +206,7 @@ async def register_stakeholder(response: Response, key: str, body: Stakeholder):
 async def update_stakeholder_state(request_id: str, body: dict, response: Response):
     #UPDATE MONGO RECORD
     try:
-        mongo_setup_provider.stakeholder_col.find_one_and_update({'_id': ObjectId(request_id)}, {'$set': {"state": "Stakeholder Registered", "id_token": body["id_token"]}}) # UPDATE REQUEST RECORD FROM MONGO
+        mongo_setup_provider.stakeholder_col.find_one_and_update({'_id': ObjectId(request_id)}, {'$set': {"state": "Stakeholder Registered", "credential_definition_id": body["credential_definition_id"], "id_token": body["id_token"]}}) # UPDATE REQUEST RECORD FROM MONGO
         subscriber = mongo_setup_provider.stakeholder_col.find_one({"_id": ObjectId(request_id)})
         #global id_token
         #id_token = body["id_token"]
@@ -207,14 +221,14 @@ async def update_stakeholder_state(request_id: str, body: dict, response: Respon
     except:
         return "Unable to send info to Holder Handler"
 
-@router.get("/read_stakeholder_status")
-async def read_stakeholder_status(response: Response, key: str, stakeholder_did: str):
-    if key != holder_key.verkey:
-        response.status_code = status.HTTP_401_UNAUTHORIZED
-        return "Invalid Verification Key"
-    
+@router.post("/read_stakeholder_status")
+async def read_stakeholder_status(response: Response, body: ReadStakeDID): # key: str, stakeholder_did: str
+    #if key != holder_key.verkey:
+    #    response.status_code = status.HTTP_401_UNAUTHORIZED
+    #    return "Invalid Verification Key"
     try:
-        subscriber = mongo_setup_provider.stakeholder_col.find_one({"stakeholderClaim.stakeholderDID": stakeholder_did}, {"_id": 0, "handler_url": 0})
+        body_dict = body.dict()
+        subscriber = mongo_setup_provider.stakeholder_col.find_one({"stakeholderClaim.stakeholderDID": body_dict["stakeholderDID"]}, {"_id": 0, "handler_url": 0})
         if subscriber == None:
             return "Stakeholder Credential non existent"
         else: 
@@ -250,6 +264,7 @@ async def request_credential(response: Response, token: str, body: Offer):
     # STORE REQUEST ON MONGO
     try:
         body_dict = body.dict()
+        epoch_ts = str(int(time.time()))
 
         # MONGO WILL ADD _id TO THIS DICT
         res_to_mongo = {
@@ -258,6 +273,7 @@ async def request_credential(response: Response, token: str, body: Offer):
                 "id": did,
                 "claims": body_dict["claims"]
             },
+            "timestamp": epoch_ts,
             "state": "Credential Requested",
             "handler_url": body_dict["handler_url"]
         }
@@ -274,6 +290,7 @@ async def request_credential(response: Response, token: str, body: Offer):
                 "id": did,
                 "claims": body_dict["claims"]
             },
+            "timestamp": epoch_ts,
             "service_endpoint": os.environ["TRADING_PROVIDER_AGENT_CONTROLLER_URL"]
             #"handler_url": handler_url
         }
@@ -294,6 +311,7 @@ async def request_credential(response: Response, token: str, body: Offer):
                 "id": did,
                 "claims": body_dict["claims"]
             },
+            "timestamp": epoch_ts,
             "state": "Credential Requested",
             "handler_url": body_dict["handler_url"]
         }
@@ -429,6 +447,12 @@ async def read_all_credentials(response: Response): #, token: str, handler_url: 
 
     except:
         return "Unable to fetch Marketplace Credentials"
+
+
+@router.post("/send_proof", include_in_schema=False)
+async def send_proof():
+    return "Awaiting Implementation"
+
 
 @router.put("/revoke")
 async def revoke_credential():

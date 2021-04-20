@@ -18,10 +18,11 @@ def stakeholder_cred_setup():
         # POST AUTH Schema
         schema = {
             "attributes": [
-                "stakeholderClaim"
+                "stakeholderClaim",
+                "timestamp"
             ],
             "schema_version": "1.0",
-            "schema_name": "stakeholder_auth"
+            "schema_name": "stakeholder_cred"
         }
         
         URL = os.environ["ISSUER_AGENT_URL"]
@@ -35,7 +36,7 @@ def stakeholder_cred_setup():
         # POST Credential Definition
         cred_definition = {
         "support_revocation": False,
-        "tag": "stakeholder_auth",
+        "tag": "stakeholder_cred",
         "schema_id": schema_id_value
         }
         

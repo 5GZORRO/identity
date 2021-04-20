@@ -26,9 +26,9 @@ with open('app/openapi/openapi_admin.json') as json_file:
 
 
 app = FastAPI(
-    docs_url="/admin",
+    docs_url="/",
     openapi_tags=tags_metadata,
-    openapi_url="/admin/openapi.json",
+    openapi_url="/openapi.json",
     title="Identity & Permissions Manager - Admin Agent API",
     description="""This is a project able to supply the mechanisms required for generating unique identifiers in 5GZORRO ecosystem, recognising communicating endpoints, 
         identifying and authenticating entities, services, and organizations, and authorising consumer requests to access a preserved services and resources."""
@@ -39,7 +39,7 @@ app.include_router(did.router)
 app.include_router(issuer.router)
 app.include_router(verifier.router)
 
-#issuer_key.holder_key_create()
+#issuer_key.issuer_key_create()
 
 #@app.get("/", include_in_schema=False)
 #def redirect_main():

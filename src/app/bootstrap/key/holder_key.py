@@ -6,9 +6,9 @@ def general_message(status, message, code):
     response = {"status": status, "message": message, "code": code}
     return json.dumps(response, indent = 4)
 
-tl = Timeloop()
+#tl = Timeloop()
 
-@tl.job(interval=timedelta(seconds=86400))
+#@tl.job(interval=timedelta(seconds=86400))
 def holder_key_create():
     try:
         print("\n")
@@ -28,4 +28,4 @@ def holder_key_create():
         print(general_message("error", "Unable to create bootstrap verification key.", 400))
         sys.exit()
 
-tl.start(block=False)
+#tl.start(block=False)

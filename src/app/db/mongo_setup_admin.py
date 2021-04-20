@@ -16,3 +16,6 @@ collection = db.offers
 
 # Collection for: stakeholder
 stakeholder_col = db.stakeholder
+
+# Collection for: verification
+verification_col = db.verification

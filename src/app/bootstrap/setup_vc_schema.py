@@ -20,10 +20,11 @@ def vc_setup():
       schema = {
         "attributes": [
           "type",
-          "credentialSubject"
+          "credentialSubject",
+          "timestamp"
         ],
         "schema_version": "1.0",
-        "schema_name": "verifiable_credential_offer"
+        "schema_name": "verifiable_cred"
       }
       
       URL = os.environ["ISSUER_AGENT_URL"]
@@ -37,7 +38,7 @@ def vc_setup():
       # POST Credential Definition
       cred_definition = {
         "support_revocation": False,
-        "tag": "verifiable_cred_offer",
+        "tag": "verifiable_cred",
         "schema_id": schema_id_value
       }
       

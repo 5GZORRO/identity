@@ -18,6 +18,7 @@ router = APIRouter(
 class ReqCred(BaseModel):
     type: str
     credentialSubject: dict
+    timestamp: str
     service_endpoint: str
     #handler_url: str
 
@@ -25,6 +26,7 @@ class IssueCred(BaseModel):
     holder_request_id: str
     type: str
     credentialSubject: dict
+    timestamp: str
     service_endpoint: str
     #handler_url: str
 
@@ -32,11 +34,13 @@ class IssueCred(BaseModel):
 ##### Stakeholder Registry Classes #####
 class ReqStakeCred(BaseModel):
     stakeholderClaim: dict
+    timestamp: str
     service_endpoint: str
 
 class IssueStakeCred(BaseModel):
     holder_request_id: str
     stakeholderClaim: dict
+    timestamp: str
     service_endpoint: str
 
 
@@ -78,6 +82,7 @@ async def request_credential_issue(request_id: str, response: Response, body: Re
                 "id": body_dict["credentialSubject"]["id"],
                 "claims": body_dict["credentialSubject"]["claims"]
             },
+            "timestamp": body_dict["timestamp"],
             "state": "Credential Requested"
             #"handler_url": body_dict["handler_url"]
             #"service_endpoint": body_dict["service_endpoint"]
@@ -93,6 +98,7 @@ async def request_credential_issue(request_id: str, response: Response, body: Re
                 "id": body_dict["credentialSubject"]["id"],
                 "claims": body_dict["credentialSubject"]["claims"]
             },
+            "timestamp": body_dict["timestamp"],
             "service_endpoint": body_dict["service_endpoint"]
         }
         #print(res_to_admin_handler)
@@ -138,6 +144,10 @@ async def issue_requested_credential(request_id: str, response: Response, body: 
                     {
                         "name": "credentialSubject",
                         "value": str(body_dict["credentialSubject"])
+                    },
+                    {
+                        "name": "timestamp",
+                        "value": str(body_dict["timestamp"])
                     }
                 ]
             }
@@ -272,6 +282,7 @@ async def request_stakeholder_issue(request_id: str, response: Response, body: R
                 #"did": body_dict["stakeholderClaim"]["did"],
                 #"verkey": body_dict["stakeholderClaim"]["verkey"]
             },
+            "timestamp": body_dict["timestamp"],
             "state": "Stakeholder Registration Requested"
             #"handler_url": body_dict["handler_url"]
             #"service_endpoint": body_dict["service_endpoint"]
@@ -299,6 +310,7 @@ async def request_stakeholder_issue(request_id: str, response: Response, body: R
                 #"did": body_dict["stakeholderClaim"]["did"],
                 #"verkey": body_dict["stakeholderClaim"]["verkey"]
             },
+            "timestamp": body_dict["timestamp"],
             "service_endpoint": body_dict["service_endpoint"]
         }
         #print(res_to_admin_handler)
@@ -336,8 +348,11 @@ async def issue_stakeholder(request_id: str, response: Response, body: IssueStak
                     {
                         "name": "stakeholderClaim",
                         "value": str(body_dict["stakeholderClaim"])
+                    },
+                    {
+                        "name": "timestamp",
+                        "value": str(body_dict["timestamp"])
                     }
-                    
                 ]
             }
         }
@@ -355,7 +370,7 @@ async def issue_stakeholder(request_id: str, response: Response, body: IssueStak
             # SUBSCRIBE TO AGENT RESPONSE
             try:
                 # UPDATE REQUEST RECORD FROM MONGO
-                mongo_setup_admin.stakeholder_col.find_one_and_update({'_id': ObjectId(request_id)}, {'$set': {"state": "Stakeholder Registered", "id_token": id_token}})
+                mongo_setup_admin.stakeholder_col.find_one_and_update({'_id': ObjectId(request_id)}, {'$set': {"state": "Stakeholder Registered", "credential_definition_id": cred_info["credential_definition_id"], "id_token": id_token}})
                 #mongo_setup.stakeholder_col.remove({"_id": ObjectId(request_id)})
 
                 resp_cred = {
