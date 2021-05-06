@@ -1,5 +1,6 @@
 #from typing import Optional
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from starlette.responses import RedirectResponse
 
 import json
@@ -12,10 +13,10 @@ from app.db import mongo_setup_provider
 from app.bootstrap import setup_verifier #setup_issuer,
 #Setup VC Schema
 #from app.bootstrap import setup_vc_schema
-#After Auth token 
-#from app.authentication import authentication
+
 
 #from app.did import did
+from app.authentication import send_proof
 from app.holder import holder
 
 
@@ -32,8 +33,21 @@ app = FastAPI(
         identifying and authenticating entities, services, and organizations, and authorising consumer requests to access a preserved services and resources."""
 )
 
+origins = [
+    "http://localhost:3000",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 ######## Routes to Endpoints in Different Files ########
 #app.include_router(did.router)
+app.include_router(send_proof.router)
 app.include_router(holder.router)
 
 holder_key.holder_key_create()

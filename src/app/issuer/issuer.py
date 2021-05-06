@@ -6,8 +6,8 @@ import requests, json, os
 from bson import ObjectId
 
 from app.db import mongo_setup_admin
-from app.bootstrap import setup_issuer, setup_vc_schema
-from app.authentication import authentication
+from app.bootstrap import setup_issuer, setup_vc_schema, setup_stake_schema
+#from app.authentication import authentication
 
 router = APIRouter(
     prefix="/issuer",
@@ -248,8 +248,8 @@ async def request_stakeholder_issue(request_id: str, response: Response, body: R
 
     # SETUP AUTH SCHEMA
     try:
-        authentication.stakeholder_cred_setup()
-        print(authentication.cred_def_id)
+        setup_stake_schema.stakeholder_cred_setup()
+        print(setup_stake_schema.cred_def_id)
     except:
         return "Unable to setup Stakeholder Schema"
     
@@ -342,7 +342,7 @@ async def issue_stakeholder(request_id: str, response: Response, body: IssueStak
         # Configure Stakeholder to be registered
         issue_cred = {
             "connection_id": setup_issuer.connection_id,
-            "cred_def_id": authentication.cred_def_id,
+            "cred_def_id": setup_stake_schema.cred_def_id,
             "credential_proposal": {
                 "attributes": [
                     {

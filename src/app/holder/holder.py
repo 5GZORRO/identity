@@ -1,7 +1,7 @@
 from typing import Optional, List
 from fastapi import APIRouter, Response, status
 from pydantic import BaseModel
-import requests, json, sys, os, time
+import requests, json, sys, os, time, threading
 from enum import Enum
 
 from bson import ObjectId
@@ -16,6 +16,7 @@ router = APIRouter(
 )
 
 class Offer(BaseModel):
+    token: str
     type: str
     #claims: dict
     claims: list = []
@@ -72,6 +73,10 @@ class Stakeholder(BaseModel):
 
 class ReadStakeDID(BaseModel):
     stakeholderDID: str
+
+class ReadOfferDID(BaseModel):
+    token: str
+    did_identifier: str
 
 
 header = {
@@ -191,16 +196,27 @@ async def register_stakeholder(response: Response, body: Stakeholder): #key: str
         }
 
         # SEND TO HOLDER HANDLER
-        try:
-            holder_handler_resp = requests.post(body_dict["handler_url"], headers=header, json=client_res, timeout=30)
-            holder_body = resp.json()
-        except:
-            return "Unable to send request info to Holder's Handler"
+        #try:
+        #    holder_handler_resp = requests.post(body_dict["handler_url"], headers=header, json=client_res, timeout=30)
+        #    holder_body = holder_handler_resp.json()
+        #except:
+        #    return "Unable to send request info to Holder's Handler"
+        thread = threading.Thread(target = send_to_holder, args=(body_dict["handler_url"],client_res,), daemon=True)
+        thread.start()
 
         return client_res
         
     except:
         return "Unable to perform Stakeholder registration request."
+
+def send_to_holder(url: str, client_response: dict):
+    try:    
+        holder_handler_resp = requests.post(url, headers=header, json=client_response, timeout=30)
+        holder_body = holder_handler_resp.json()
+        return holder_body
+    except:
+        return "Unable to send request info to Holder's Handler"
+
 
 @router.post("/update_stakeholder_state/{request_id}", include_in_schema=False)
 async def update_stakeholder_state(request_id: str, body: dict, response: Response):
@@ -239,13 +255,12 @@ async def read_stakeholder_status(response: Response, body: ReadStakeDID): # key
 
 ####################### Verifiable Credentials Management #######################
 @router.post("/create_did", status_code=201)
-async def request_credential(response: Response, token: str, body: Offer):
-    #if token != id_token:
-    #    response.status_code = status.HTTP_401_UNAUTHORIZED
-    #    return "Invalid ID Token"
+async def request_credential(response: Response, body: Offer):
+    # AUTH
     try:
-        subscriber = mongo_setup_provider.stakeholder_col.find_one({"id_token": token})
-        if token != subscriber["id_token"]:
+        body_dict = body.dict()
+        subscriber = mongo_setup_provider.stakeholder_col.find_one({"id_token": body_dict["token"]})
+        if body_dict["token"] != subscriber["id_token"]:
             response.status_code = status.HTTP_401_UNAUTHORIZED
             return "Invalid ID Token"
     except:
@@ -263,7 +278,6 @@ async def request_credential(response: Response, token: str, body: Offer):
 
     # STORE REQUEST ON MONGO
     try:
-        body_dict = body.dict()
         epoch_ts = str(int(time.time()))
 
         # MONGO WILL ADD _id TO THIS DICT
@@ -345,14 +359,15 @@ async def update_did_state(request_id: str, body: dict, response: Response):
     except:
         return "Unable to send info to Holder Handler"
 
-@router.get("/read_did_status")
-async def read_credential_status(response: Response, token: str, did_identifier: str):
+@router.post("/read_did_status")
+async def read_credential_status(response: Response, body: ReadOfferDID):
     #if token != id_token:
     #    response.status_code = status.HTTP_401_UNAUTHORIZED
     #    return "Invalid ID Token"
     try:
-        subscriber = mongo_setup_provider.stakeholder_col.find_one({"id_token": token})
-        if token != subscriber["id_token"]:
+        body_dict = body.dict()
+        subscriber = mongo_setup_provider.stakeholder_col.find_one({"id_token": body_dict["token"]})
+        if body_dict["token"] != subscriber["id_token"]:
             response.status_code = status.HTTP_401_UNAUTHORIZED
             return "Invalid ID Token"
     except:
@@ -360,7 +375,7 @@ async def read_credential_status(response: Response, token: str, did_identifier:
         return "Invalid ID Token"
 
     try:
-        subscriber = mongo_setup_provider.collection.find_one({"credentialSubject.id": did_identifier}, {"_id": 0})
+        subscriber = mongo_setup_provider.collection.find_one({"credentialSubject.id": body_dict["did_identifier"]}, {"_id": 0})
         if subscriber == None:
             return "DID Credential non existent"
         else: 
@@ -447,11 +462,6 @@ async def read_all_credentials(response: Response): #, token: str, handler_url: 
 
     except:
         return "Unable to fetch Marketplace Credentials"
-
-
-@router.post("/send_proof", include_in_schema=False)
-async def send_proof():
-    return "Awaiting Implementation"
 
 
 @router.put("/revoke")

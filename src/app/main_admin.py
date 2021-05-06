@@ -1,7 +1,7 @@
 #from typing import Optional
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from starlette.responses import RedirectResponse
-
 import json
 
 #Verification Key
@@ -11,14 +11,14 @@ from app.db import mongo_setup_provider # For Holder Operations
 from app.db import mongo_setup_admin
 #Connection First
 from app.bootstrap import setup_issuer, setup_verifier
-#Setup VC Schema
-from app.bootstrap import setup_vc_schema
-#After Auth token 
-from app.authentication import authentication
+#Setup required Schemas
+from app.bootstrap import setup_vc_schema, setup_stake_schema
 
-from app.did import did
+
+#from app.did import did
+from app.authentication import verify_credential #, send_proof
 from app.issuer import issuer
-from app.verifier import verifier
+#from app.verifier import verifier
 
 
 with open('app/openapi/openapi_admin.json') as json_file:
@@ -34,10 +34,24 @@ app = FastAPI(
         identifying and authenticating entities, services, and organizations, and authorising consumer requests to access a preserved services and resources."""
 )
 
+origins = [
+    "http://localhost:3000",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 ######## Routes to Endpoints in Different Files ########
-app.include_router(did.router)
+#app.include_router(did.router)
 app.include_router(issuer.router)
-app.include_router(verifier.router)
+app.include_router(verify_credential.router)
+#app.include_router(send_proof.router)
+#app.include_router(verifier.router)
 
 #issuer_key.issuer_key_create()
 
