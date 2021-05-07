@@ -2,7 +2,7 @@
 Repository of 5G ZORRO Identity and Permissions Manager components source code.
 
 * **Machine requirements**: 
-  * Ubuntu 18.04.1 LTS
+  * Ubuntu 20.04 LTS
   * Git 
   * Docker
   * Docker-compose
@@ -96,35 +96,21 @@ All VON-Network nodes should now be active.
   * Von-network running
   
 ### Install Agents
-Reference: https://github.com/hyperledger/aries-cloudagent-python/blob/main/demo/README.md#running-in-docker
-
 Git Repository: https://github.com/hyperledger/aries-cloudagent-python
 
-Note: Tested with the 0.5.6 version of aries-cloudagent
+Note: Tested with the 0.6.0 version of aries-cloudagent
 
 Use below command to download code to your local machine:
 ```python
 git clone https://github.com/hyperledger/aries-cloudagent-python
 ```
-Go to the directory
-```python
-cd aries-cloudagent-python/demo
-```
-Now it's possible to initialize the agents. To run the Issuer Agent type:
-```python
-./run_demo faber
-```
-Issuer Agent is running on port 8021.
-In a new terminal, change directory into aries-cloudagent-python directory of your clone of this repository. Start the Holder Agent by issuing the following command:
-```python
-./run_demo alice
-```
-Holder Agent is running on port 8031.
-Now perform the same for the Verifier Agent:
-```python
-./run_demo acme
-```
-Verifier Agent is running on port 8041.
+Check the following wiki: https://github.com/5GZORRO/identity/wiki/How-to-install-ACA-PY-0.6.0 to perform the required steps to run the Agents
+
+Now it's possible to initialize the agents. To run the Issuer Agent use the command available in https://github.com/5GZORRO/identity/wiki/IssuerAgent-Startup-and-Settings. Issuer Agent will be running on port 8021.
+
+To then run the Holder Agent use the command provided in https://github.com/5GZORRO/identity/wiki/Holder-Agent-Startup-and-Settings. Holder Agent will be running on port 8031.
+
+Finally, run the Verifier Agent by using the command provided in https://github.com/5GZORRO/identity/wiki/Verifier-Agent-Startup-and-Settings. Verifier Agent will be running on port 8041.
 
 ## Run 5GZorro Agents
 * **Requirements**: 
