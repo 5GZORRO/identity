@@ -15,9 +15,19 @@ router = APIRouter(
     tags=["holder"]
 )
 
+### Role -> Enums ###
+class Type(str, Enum):
+    product_offer = 'ProductOffer'
+    regulated_product_offer = 'RegulatedProductOffer'
+    governance_proposal = 'GovernanceProposal'
+    governance_vote = 'GovernanceVote'
+    legal_prose_template = 'LegalProseTemplate'
+    sla = 'SLA'
+    agreement = 'Agreement'
+
 class Offer(BaseModel):
     token: str
-    type: str
+    type: Type
     #claims: dict
     claims: list = []
     handler_url: str
@@ -25,10 +35,10 @@ class Offer(BaseModel):
 ### Role -> Enums ###
 class Role(str, Enum):
     Regulator = 'Regulator'
-    Resource_Provider = 'Resource Provider'
-    Resource_Consumer = 'Resource Consumer'
-    Service_Provider = 'Service Provider'
-    Service_Consumer = 'Service Consumer'
+    Resource_Provider = 'ResourceProvider'
+    Resource_Consumer = 'ResourceConsumer'
+    Service_Provider = 'ServiceProvider'
+    Service_Consumer = 'ServiceConsumer'
 
 ### Assets -> Enums ###
 class Assets(str, Enum):
@@ -246,6 +256,7 @@ async def read_stakeholder_status(response: Response, body: ReadStakeDID): # key
         body_dict = body.dict()
         subscriber = mongo_setup_provider.stakeholder_col.find_one({"stakeholderClaim.stakeholderDID": body_dict["stakeholderDID"]}, {"_id": 0, "handler_url": 0})
         if subscriber == None:
+            response.status_code = status.HTTP_404_NOT_FOUND
             return "Stakeholder Credential non existent"
         else: 
             return subscriber
@@ -377,6 +388,7 @@ async def read_credential_status(response: Response, body: ReadOfferDID):
     try:
         subscriber = mongo_setup_provider.collection.find_one({"credentialSubject.id": body_dict["did_identifier"]}, {"_id": 0})
         if subscriber == None:
+            response.status_code = status.HTTP_404_NOT_FOUND
             return "DID Credential non existent"
         else: 
             return subscriber

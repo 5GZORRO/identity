@@ -22,85 +22,7 @@ header = {
     'Content-Type': 'application/json'        
 }
 
-@router.get("/teste", include_in_schema=False, status_code=202)
-async def teste(response: Response):
-    objecto = {
-        "presentation_request_dict":{
-            "@type":"did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/present-proof/1.0/request-presentation",
-            "@id":"5a2177d2-fafc-4de4-8249-8009ce63f0c0",
-            "comment":"Verify Stakeholder",
-            "request_presentations~attach":[
-                {
-                    "@id":"libindy-request-presentation-0",
-                    "mime-type":"application/json",
-                    "data":{
-                        "base64":"eyJuYW1lIjogIlByb29mIG9mIFN0YWtlaG9sZGVyIiwgInZlcnNpb24iOiAiMS4wIiwgInJlcXVlc3RlZF9hdHRyaWJ1dGVzIjoge30sICJyZXF1ZXN0ZWRfcHJlZGljYXRlcyI6IHsiMF90aW1lc3RhbXBfR0VfdXVpZCI6IHsibmFtZSI6ICJ0aW1lc3RhbXAiLCAicF90eXBlIjogIj49IiwgInBfdmFsdWUiOiAxNjIwMTQ3ODQ5LCAicmVzdHJpY3Rpb25zIjogW3siY3JlZF9kZWZfaWQiOiAiVG12dGJ1dWpDUTJlTlUycWRhcExEazozOkNMOjM4OnN0YWtlaG9sZGVyX2NyZWQifV19LCAiMV90aW1lc3RhbXBfR0VfdXVpZCI6IHsibmFtZSI6ICJ0aW1lc3RhbXAiLCAicF90eXBlIjogIjw9IiwgInBfdmFsdWUiOiAxNjIwMTQ3ODQ5LCAicmVzdHJpY3Rpb25zIjogW3siY3JlZF9kZWZfaWQiOiAiVG12dGJ1dWpDUTJlTlUycWRhcExEazozOkNMOjM4OnN0YWtlaG9sZGVyX2NyZWQifV19fSwgIm5vbmNlIjogIjM3MjIzMDk3NTUzMTIzNDA1MzMzMzAxMyJ9"
-                    }
-                }
-            ]
-        },
-        "connection_id":"663f0cd7-eccb-49be-8009-44058ffa1e3b",
-        "auto_present":False,
-        "updated_at":"2021-05-04 17:05:10.228346Z",
-        "initiator":"self",
-        "thread_id":"5a2177d2-fafc-4de4-8249-8009ce63f0c0",
-        "presentation_exchange_id":"2f008508-dbf5-42b6-902b-8d996574e752",
-        "state":"request_sent",
-        "created_at":"2021-05-04 17:05:10.228346Z",
-        "role":"verifier",
-        "trace":False,
-        "presentation_request":{
-            "name":"Proof of Stakeholder",
-            "version":"1.0",
-            "requested_attributes":{
-                
-            },
-            "requested_predicates":{
-                "0_timestamp_GE_uuid":{
-                    "name":"timestamp",
-                    "p_type":">=",
-                    "p_value":1620147849,
-                    "restrictions":[
-                        {
-                            "cred_def_id":"TmvtbuujCQ2eNU2qdapLDk:3:CL:38:stakeholder_cred"
-                        }
-                    ]
-                },
-                "1_timestamp_GE_uuid":{
-                    "name":"timestamp",
-                    "p_type":"<=",
-                    "p_value":1620147849,
-                    "restrictions":[
-                        {
-                            "cred_def_id":"TmvtbuujCQ2eNU2qdapLDk:3:CL:38:stakeholder_cred"
-                        }
-                    ]
-                }
-            },
-            "nonce":"372230975531234053333013"
-        }
-    }
-    URL = os.environ["ISSUER_AGENT_URL"]
-    stakeholderDID = "XPF1DmYrfr4s6Uv8tY2BA3"
-    if objecto["state"] == "request_sent":
-        # Check for verification true
-        final_resp = requests.get(URL+"/present-proof/records/"+objecto["presentation_exchange_id"], headers=header, timeout=60)
-        check_true = json.loads(final_resp.text)
-        if check_true["verified"] == "true":
-            # UPDATE REQUEST RECORD FROM MONGO
-            mongo_setup_admin.stakeholder_col.find_one_and_update({"stakeholderClaim.stakeholderDID": stakeholderDID}, {'$set': {"verified": True}})
-            ending = {
-                "stakeholderDID": stakeholderDID,
-                "verified": True
-            }
-            return ending
-
-
-
-
-
-
-@router.post("/verify_credential", include_in_schema=False, status_code=202)
+@router.post("/verify_credential", status_code=202)
 async def verify_credential(response: Response, body: EncodedProof):
     # Read encoded object
     try:
@@ -110,12 +32,19 @@ async def verify_credential(response: Response, body: EncodedProof):
     except:
         return "Unable to read proof token"
     
-    # Check if Admin has emitted cred
+    # Check if Admin has emitted cred, and check if already verified
     try:
         subscriber = mongo_setup_admin.stakeholder_col.find_one({"stakeholderClaim.stakeholderDID": decoded["stakeholderDID"]})
+        if subscriber is None:
+            response.status_code = status.HTTP_401_UNAUTHORIZED
+            return "Stakeholder Credential wasn't emitted by this Admin Agent"
+        else:
+            if "verified" in subscriber:
+                response.status_code = status.HTTP_400_BAD_REQUEST
+                return "Stakeholder Credential already verified"
     except:
         response.status_code = status.HTTP_401_UNAUTHORIZED
-        return "Stakeholder Credential wasn't emitted by this Admin Agent"
+        return "Unable to check who emitted Stakeholder Credential"
 
     # SETUP CONNECTION
     try:

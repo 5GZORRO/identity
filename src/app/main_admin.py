@@ -36,6 +36,7 @@ app = FastAPI(
 
 origins = [
     "http://localhost:3000",
+    "https://5gzorro.netlify.app/",
 ]
 
 app.add_middleware(

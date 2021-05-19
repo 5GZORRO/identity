@@ -23,15 +23,17 @@ header = {
     'Content-Type': 'application/json'        
 }
 
-@router.post("/send_proof", include_in_schema=False, status_code=201)
+@router.post("/send_proof", status_code=201)
 async def send_proof(response: Response, body: Proof):
     # Check for stakeholder being issued
     try:
         body_dict = body.dict()
         subscriber = mongo_setup_provider.stakeholder_col.find_one({"stakeholderClaim.stakeholderDID": body_dict["stakeholderDID"]})
         if subscriber == None:
+            response.status_code = status.HTTP_404_NOT_FOUND
             return "Stakeholder Credential non existent in this Agent"
         if subscriber["state"] != "Stakeholder Registered":
+            response.status_code = status.HTTP_400_BAD_REQUEST
             return "Stakeholder Credential hasn't been emitted"
     except:
         return "Unable to fetch requested Stakeholder Credential"
