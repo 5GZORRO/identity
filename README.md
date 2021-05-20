@@ -118,7 +118,7 @@ Finally, run the Verifier Agent by using the command provided in https://github.
   * Agents running
   * Mongo active
 
-Before running this project, you must create an .env file & an .env.admin file, based on the .env.template & .env.admin.template files available in identity/src, respectively. Further detailing can be found in said file.
+Before running this project, you must create an .env file & an .env_admin file, based on the .env.template & .env_admin.template files available in identity/src, respectively. Further detailing can be found in said file.
 
 To run the Identity Controllers, go to identity/src folder, then type in the command line:
 ```
