@@ -1,4 +1,4 @@
 .env
-.env.admin
+.env_admin
 __pycache__
 docker-compose-production.yml
