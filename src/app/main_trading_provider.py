@@ -10,7 +10,7 @@ from app.bootstrap.key import holder_key
 #Database Setup
 from app.db import mongo_setup_provider
 #Connection First
-from app.bootstrap import setup_verifier #setup_issuer,
+#from app.bootstrap import setup_verifier #setup_issuer,
 #Setup VC Schema
 #from app.bootstrap import setup_vc_schema
 

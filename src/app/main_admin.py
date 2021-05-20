@@ -5,18 +5,19 @@ from starlette.responses import RedirectResponse
 import json
 
 #Verification Key
-from app.bootstrap.key import issuer_key
+from app.bootstrap.key import holder_key #,issuer_key
 #Database Setup
 from app.db import mongo_setup_provider # For Holder Operations
 from app.db import mongo_setup_admin
 #Connection First
-from app.bootstrap import setup_issuer, setup_verifier
+from app.bootstrap import setup_issuer #, setup_verifier
 #Setup required Schemas
 from app.bootstrap import setup_vc_schema, setup_stake_schema
 
 
 #from app.did import did
 from app.authentication import verify_credential #, send_proof
+from app.holder import holder
 from app.issuer import issuer
 #from app.verifier import verifier
 
@@ -49,11 +50,13 @@ app.add_middleware(
 
 ######## Routes to Endpoints in Different Files ########
 #app.include_router(did.router)
+app.include_router(holder.router)
 app.include_router(issuer.router)
 app.include_router(verify_credential.router)
 #app.include_router(send_proof.router)
 #app.include_router(verifier.router)
 
+holder_key.holder_key_create()
 #issuer_key.issuer_key_create()
 
 #@app.get("/", include_in_schema=False)

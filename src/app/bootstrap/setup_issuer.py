@@ -19,7 +19,7 @@ header = {
     'Content-Type': 'application/json'        
 }
 
-def issuer_connection():
+def issuer_connection(holder_agent_url):
     print("\n")
     print("###########################################################")
     print("#################### ISSUER CONNECTION ####################")
@@ -40,8 +40,9 @@ def issuer_connection():
         sys.exit()
 
     try:
-        URL_holder = os.environ["HOLDER_AGENT_URL"]
-        resp_accept = requests.post(URL_holder+"/connections/receive-invitation", data=conn_invite, headers=header, timeout=30)
+        #URL_holder = os.environ["HOLDER_AGENT_URL"]
+        #resp_accept = requests.post(URL_holder+"/connections/receive-invitation", data=conn_invite, headers=header, timeout=30)
+        resp_accept = requests.post(holder_agent_url+"/connections/receive-invitation", data=conn_invite, headers=header, timeout=30)
         body_accept = resp_accept.json()
         print(body_accept)
     except:

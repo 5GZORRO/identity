@@ -4,6 +4,10 @@
         "description": "Operations regarding Credential Verifications."
     },
     {
+        "name": "holder",
+        "description": "Operations regarding Holder Requests."   
+    },
+    {
         "name": "issuer",
         "description": "Operations regarding Issuer Requests."   
     }

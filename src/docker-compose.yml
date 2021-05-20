@@ -11,9 +11,9 @@ services:
             - "6200:8000"
         restart: always
         env_file:
-            - .env
+            - .env.admin
         depends_on:
-            - mongodb_container
+            - mongodb_admin_container
     
     #regulator_agent:
     #    build: ../src/Regulator_Agent
@@ -45,10 +45,10 @@ services:
         env_file:
             - .env
         depends_on:
-        #    - mongodb_trade_provider_container
-            - mongodb_container
+            - mongodb_trade_provider_container
+        #    - mongodb_container
     
-    mongodb_container:
+    mongodb_admin_container:
         image: mongo:latest
         #environment:
         #    MONGO_INITDB_ROOT_USERNAME: root
@@ -56,17 +56,19 @@ services:
         ports:
             - 27017:27017
         volumes:
-            - mongodb_data_container:/data/db
+            - mongodb_admin_data_container:/data/db
 
-    #mongodb_trade_provider_container:
-    #    image: mongo:latest
-    #    ports:
-    #        - 27018:27017
-    #    volumes:
-    #        - mongodb_data_container:/data/db_provider
+    mongodb_trade_provider_container:
+        image: mongo:latest
+        ports:
+            - 27018:27017
+        volumes:
+            - mongodb_provider_data_container:/data/db
 
 volumes:
-    mongodb_data_container:
+    mongodb_admin_data_container:
+    mongodb_provider_data_container:
+    
         
 #networks:
 #  front:

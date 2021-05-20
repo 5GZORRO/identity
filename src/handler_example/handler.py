@@ -5,7 +5,7 @@ from flask import Flask, request, jsonify
 
 app = Flask(__name__)
 
-admin_controller_url = os.environ["ADMIN_CONTROLLER_URL"]
+admin_controller_url = os.environ["ADMIN_CONTROLLER_URL_DEV"]
 
 ########## CREDENTIAL ISSUING ###########
 @app.route('/handler_admin/receive', methods=['POST'])

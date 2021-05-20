@@ -48,7 +48,7 @@ async def verify_credential(response: Response, body: EncodedProof):
 
     # SETUP CONNECTION
     try:
-        setup_issuer.issuer_connection()
+        setup_issuer.issuer_connection(decoded["service_endpoint"])
         #print(setup_issuer.connection_id)
     except:
         return "Unable to establish Issuer Connection"

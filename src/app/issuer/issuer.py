@@ -20,6 +20,7 @@ class ReqCred(BaseModel):
     credentialSubject: dict
     timestamp: str
     service_endpoint: str
+    agent_service_endpoint: str
     #handler_url: str
 
 class IssueCred(BaseModel):
@@ -36,6 +37,7 @@ class ReqStakeCred(BaseModel):
     stakeholderClaim: dict
     timestamp: str
     service_endpoint: str
+    agent_service_endpoint: str
 
 class IssueStakeCred(BaseModel):
     holder_request_id: str
@@ -53,7 +55,9 @@ header = {
 async def request_credential_issue(request_id: str, response: Response, body: ReqCred):
     # SETUP ISSUER CONNECTION
     try:
-        setup_issuer.issuer_connection()
+        body_dict = body.dict()
+
+        setup_issuer.issuer_connection(body_dict["agent_service_endpoint"])
         print(setup_issuer.connection_id)
     except:
         return "Unable to establish Issuer Connection"
@@ -73,8 +77,6 @@ async def request_credential_issue(request_id: str, response: Response, body: Re
 
     # SUBMIT REQUEST TO ADMIN HANDLER
     try:
-        body_dict = body.dict()
-
         res_to_insert_db = {
             "holder_request_id": request_id,
             "type": body_dict["type"],
@@ -241,7 +243,10 @@ async def remove_credential():
 async def request_stakeholder_issue(request_id: str, response: Response, body: ReqStakeCred):
     # SETUP ISSUER CONNECTION
     try:
-        setup_issuer.issuer_connection()
+        body_dict = body.dict()
+
+        setup_issuer.issuer_connection(body_dict["agent_service_endpoint"])
+        #setup_issuer.issuer_connection()
         print(setup_issuer.connection_id)
     except:
         return "Unable to establish Issuer Connection"
@@ -261,8 +266,6 @@ async def request_stakeholder_issue(request_id: str, response: Response, body: R
 
     # SUBMIT REQUEST TO ADMIN HANDLER
     try:
-        body_dict = body.dict()
-        
         res_to_insert_db = {
             "holder_request_id": request_id,
             "stakeholderClaim": {

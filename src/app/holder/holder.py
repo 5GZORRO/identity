@@ -172,7 +172,8 @@ async def register_stakeholder(response: Response, body: Stakeholder): #key: str
                 #"verkey": verkey
             },
             "timestamp": epoch_ts,
-            "service_endpoint": os.environ["TRADING_PROVIDER_AGENT_CONTROLLER_URL"]
+            "service_endpoint": os.environ["TRADING_PROVIDER_AGENT_CONTROLLER_URL"],
+            "agent_service_endpoint": holder_url
         }
         #print(res_to_admin)
         #print("\n")
@@ -316,7 +317,8 @@ async def request_credential(response: Response, body: Offer):
                 "claims": body_dict["claims"]
             },
             "timestamp": epoch_ts,
-            "service_endpoint": os.environ["TRADING_PROVIDER_AGENT_CONTROLLER_URL"]
+            "service_endpoint": os.environ["TRADING_PROVIDER_AGENT_CONTROLLER_URL"],
+            "agent_service_endpoint": holder_url
             #"handler_url": handler_url
         }
         #print(res_to_admin)

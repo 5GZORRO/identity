@@ -10,8 +10,8 @@ services:
         ports:
             - "4800:4800"
         restart: always
-        environment:
-            ADMIN_CONTROLLER_URL: ${ADMIN_CONTROLLER_URL_DEV}
+        env_file:
+            - .env
 
 #networks:
 # front:
