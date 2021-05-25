@@ -8,14 +8,14 @@ app = Flask(__name__)
 admin_controller_url = os.environ["ADMIN_CONTROLLER_URL_DEV"]
 
 ########## CREDENTIAL ISSUING ###########
-@app.route('/handler_admin/receive', methods=['POST'])
+@app.route('/receive', methods=['POST'])
 def handler_receiver():
     global value
     value = request.json
     print(value)
     return value
 
-@app.route('/handler_admin/accept', methods=['GET'])
+@app.route('/accept', methods=['GET'])
 def handler_sender():
     res_to_admin_agent = {
 	    "holder_request_id": value["holder_request_id"],
@@ -35,14 +35,14 @@ def handler_sender():
     return body
 
 ########## STAKEHOLDER REGISTRATION ###########
-@app.route('/handler_admin/stakeholder/receive', methods=['POST'])
+@app.route('/stakeholder/receive', methods=['POST'])
 def handler_stakeholder_receiver():
     global stake_value
     stake_value = request.json
     print(stake_value)
     return stake_value
 
-@app.route('/handler_admin/stakeholder/accept', methods=['GET'])
+@app.route('/stakeholder/accept', methods=['GET'])
 def handler_stakeholder_sender():
     res_stake_admin_agent = {
 	    "holder_request_id": stake_value["holder_request_id"],

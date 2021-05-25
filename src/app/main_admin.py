@@ -16,7 +16,7 @@ from app.bootstrap import setup_vc_schema, setup_stake_schema
 
 
 #from app.did import did
-from app.authentication import verify_credential #, send_proof
+from app.authentication import send_proof, verify_credential
 from app.holder import holder
 from app.issuer import issuer
 #from app.verifier import verifier
@@ -52,8 +52,8 @@ app.add_middleware(
 #app.include_router(did.router)
 app.include_router(holder.router)
 app.include_router(issuer.router)
+app.include_router(send_proof.router)
 app.include_router(verify_credential.router)
-#app.include_router(send_proof.router)
 #app.include_router(verifier.router)
 
 holder_key.holder_key_create()
