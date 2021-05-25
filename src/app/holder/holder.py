@@ -363,11 +363,13 @@ async def request_credential(response: Response, body: Offer):
         }
         
         # SEND TO HOLDER HANDLER
-        try:
-            holder_handler_resp = requests.post(body_dict["handler_url"], headers=header, json=client_res, timeout=30)
-            holder_body = resp.json()
-        except:
-            return "Unable to send request info to Holder's Handler"
+        #try:
+        #    holder_handler_resp = requests.post(body_dict["handler_url"], headers=header, json=client_res, timeout=30)
+        #    holder_body = resp.json()
+        #except:
+        #    return "Unable to send request info to Holder's Handler"
+        thread = threading.Thread(target = send_to_holder, args=(body_dict["handler_url"],client_res,), daemon=True)
+        thread.start()
 
         return client_res
         
