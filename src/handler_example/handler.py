@@ -56,6 +56,7 @@ def handler_stakeholder_sender():
             "stakeholderRoles": stake_value["stakeholderClaim"]["stakeholderRoles"],
             "stakeholderProfile": {
                 "name": stake_value["stakeholderClaim"]["stakeholderProfile"]["name"],
+                "ledgerIdentity": stake_value["stakeholderClaim"]["stakeholderProfile"]["ledgerIdentity"],
                 "address": stake_value["stakeholderClaim"]["stakeholderProfile"]["address"],
                 "notificationMethod": stake_value["stakeholderClaim"]["stakeholderProfile"]["notificationMethod"]
             },

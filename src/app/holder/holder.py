@@ -67,6 +67,7 @@ class SHNotify(BaseModel):
 
 class SHProfile(BaseModel):
     name: str
+    ledgerIdentity: str
     address: str
     notificationMethod: SHNotify
 
@@ -142,6 +143,7 @@ async def register_stakeholder(response: Response, body: Stakeholder): #key: str
                 "stakeholderRoles": body_dict["stakeholderRoles"],
                 "stakeholderProfile": {
                     "name": body_dict["stakeholderProfile"]["name"],
+                    "ledgerIdentity": body_dict["stakeholderProfile"]["ledgerIdentity"],
                     "address": body_dict["stakeholderProfile"]["address"],
                     "notificationMethod": body_dict["stakeholderProfile"]["notificationMethod"]
                 },
@@ -173,6 +175,7 @@ async def register_stakeholder(response: Response, body: Stakeholder): #key: str
                 "stakeholderRoles": body_dict["stakeholderRoles"],
                 "stakeholderProfile": {
                     "name": body_dict["stakeholderProfile"]["name"],
+                    "ledgerIdentity": body_dict["stakeholderProfile"]["ledgerIdentity"],
                     "address": body_dict["stakeholderProfile"]["address"],
                     "notificationMethod": body_dict["stakeholderProfile"]["notificationMethod"]
                 },
@@ -203,6 +206,7 @@ async def register_stakeholder(response: Response, body: Stakeholder): #key: str
                 "stakeholderRoles": body_dict["stakeholderRoles"],
                 "stakeholderProfile": {
                     "name": body_dict["stakeholderProfile"]["name"],
+                    "ledgerIdentity": body_dict["stakeholderProfile"]["ledgerIdentity"],
                     "address": body_dict["stakeholderProfile"]["address"],
                     "notificationMethod": body_dict["stakeholderProfile"]["notificationMethod"]
                 },

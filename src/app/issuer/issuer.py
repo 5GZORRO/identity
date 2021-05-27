@@ -278,6 +278,7 @@ async def request_stakeholder_issue(request_id: str, response: Response, body: R
                 "stakeholderRoles": body_dict["stakeholderClaim"]["stakeholderRoles"],
                 "stakeholderProfile": {
                     "name": body_dict["stakeholderClaim"]["stakeholderProfile"]["name"],
+                    "ledgerIdentity": body_dict["stakeholderClaim"]["stakeholderProfile"]["ledgerIdentity"],
                     "address": body_dict["stakeholderClaim"]["stakeholderProfile"]["address"],
                     "notificationMethod": body_dict["stakeholderClaim"]["stakeholderProfile"]["notificationMethod"]
                 },
@@ -306,6 +307,7 @@ async def request_stakeholder_issue(request_id: str, response: Response, body: R
                 "stakeholderRoles": body_dict["stakeholderClaim"]["stakeholderRoles"],
                 "stakeholderProfile": {
                     "name": body_dict["stakeholderClaim"]["stakeholderProfile"]["name"],
+                    "ledgerIdentity": body_dict["stakeholderClaim"]["stakeholderProfile"]["ledgerIdentity"],
                     "address": body_dict["stakeholderClaim"]["stakeholderProfile"]["address"],
                     "notificationMethod": body_dict["stakeholderClaim"]["stakeholderProfile"]["notificationMethod"]
                 },
