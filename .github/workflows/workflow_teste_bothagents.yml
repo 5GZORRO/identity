@@ -5,9 +5,9 @@ env:
   REPOSITORY_NAME_LC: identity
   ID_GITHUB: 5gzorro
 
-  IMAGE_NAME_ISSUER: 5g-zorro-teste-agent_issuer  
+  IMAGE_NAME_ISSUER: 5g-zorro-identity-admin-agent
   DOCKER_NAME_ISSUER: Dockerfile_issuer
-  IMAGE_NAME_HOLDER: 5g-zorro-teste-agent_holder  
+  IMAGE_NAME_HOLDER: 5g-zorro-identity-holder-agent
   DOCKER_NAME_HOLDER: Dockerfile_holder
 
   USER_SERVER: ubuntu
