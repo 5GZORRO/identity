@@ -1,3 +1,11 @@
+![](https://img.shields.io/badge/python-v3.8.3-brightgreen)
+![](https://img.shields.io/badge/fastapi-latest-blue)
+![](https://img.shields.io/badge/mongo-latest-blue)
+![](https://img.shields.io/badge/docker%20compose-v3-2FBAE0)
+[![](https://img.shields.io/badge/packages-up--to--date-brightgreen)](https://github.com/orgs/5GZORRO/packages?repo_name=identity)
+[![](https://img.shields.io/badge/license-Apache--2.0-blueviolet)](https://github.com/5GZORRO/identity/blob/main/LICENSE)
+
+
 # identity
 Repository of 5G ZORRO Identity and Permissions Manager components source code.
 
@@ -13,7 +21,7 @@ Repository of 5G ZORRO Identity and Permissions Manager components source code.
 ### Install Git
 ```python
 sudo apt-get update
-```
+```()
 ```python
 sudo apt-get install git
 ```
