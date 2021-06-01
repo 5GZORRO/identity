@@ -38,7 +38,7 @@ jobs:
       - name: Build image
         run: |
           cd src
-          sudo docker build -t ${{ env.IMAGE_NAME_ISSUER }} -f ${{ env.DOCKER_NAME_ISSUER }} .
+          sudo docker build -t docker.pkg.github.com/${{ env.ID_GITHUB }}/${{ env.REPOSITORY_NAME_LC }}/${{ env.IMAGE_NAME_ISSUER }} -f ${{ env.DOCKER_NAME_ISSUER }} .
       # delete old package version
       - uses: actions/delete-package-versions@v1
         continue-on-error: true
@@ -48,7 +48,7 @@ jobs:
       - name: Publish image
         run: |
           docker login -u ${{ secrets.GIT_USER }} -p ${{ secrets.GIT_TOKEN }} docker.pkg.github.com
-          docker tag ${{ env.IMAGE_NAME_ISSUER }} docker.pkg.github.com/${{ env.ID_GITHUB }}/${{ env.REPOSITORY_NAME_LC }}/${{ env.IMAGE_NAME_ISSUER }}:latest docker.pkg.github.com/${{ env.ID_GITHUB }}/${{ env.REPOSITORY_NAME_LC }}/${{ env.IMAGE_NAME_ISSUER }}:${{ steps.getversion.outputs.version }}
+          docker tag docker.pkg.github.com/${{ env.ID_GITHUB }}/${{ env.REPOSITORY_NAME_LC }}/${{ env.IMAGE_NAME_ISSUER }}:latest docker.pkg.github.com/${{ env.ID_GITHUB }}/${{ env.REPOSITORY_NAME_LC }}/${{ env.IMAGE_NAME_ISSUER }}:${{ steps.getversion.outputs.version }}
           docker push docker.pkg.github.com/${{ env.ID_GITHUB }}/${{ env.REPOSITORY_NAME_LC }}/${{ env.IMAGE_NAME_ISSUER }}
       # create release
       - name: Create Release
@@ -77,7 +77,7 @@ jobs:
       - name: Build image
         run: |
           cd src
-          sudo docker build -t ${{ env.IMAGE_NAME_HOLDER }} -f ${{ env.DOCKER_NAME_HOLDER }} .
+          sudo docker build -t docker.pkg.github.com/${{ env.ID_GITHUB }}/${{ env.REPOSITORY_NAME_LC }}/${{ env.IMAGE_NAME_HOLDER }} -f ${{ env.DOCKER_NAME_HOLDER }} .
       # delete old package version
       - uses: actions/delete-package-versions@v1
         continue-on-error: true
@@ -87,7 +87,7 @@ jobs:
       - name: Publish image
         run: |
           docker login -u ${{ secrets.GIT_USER }} -p ${{ secrets.GIT_TOKEN }} docker.pkg.github.com
-          docker tag ${{ env.IMAGE_NAME_ISSUER }} docker.pkg.github.com/${{ env.ID_GITHUB }}/${{ env.REPOSITORY_NAME_LC }}/${{ env.IMAGE_NAME_HOLDER }}:latest docker.pkg.github.com/${{ env.ID_GITHUB }}/${{ env.REPOSITORY_NAME_LC }}/${{ env.IMAGE_NAME_HOLDER }}:${{ steps.getversion.outputs.version }}
+          docker tag docker.pkg.github.com/${{ env.ID_GITHUB }}/${{ env.REPOSITORY_NAME_LC }}/${{ env.IMAGE_NAME_HOLDER }}:latest docker.pkg.github.com/${{ env.ID_GITHUB }}/${{ env.REPOSITORY_NAME_LC }}/${{ env.IMAGE_NAME_HOLDER }}:${{ steps.getversion.outputs.version }}
           docker push docker.pkg.github.com/${{ env.ID_GITHUB }}/${{ env.REPOSITORY_NAME_LC }}/${{ env.IMAGE_NAME_HOLDER }}
       # create release
       - name: Create Release
