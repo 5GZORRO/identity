@@ -14,21 +14,21 @@ env:
 
 jobs:
   publish_package_ISSUER: 
-    runs-on: teste
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2 
       # clone project
       
-      - name: clone repository
-        continue-on-error: true
-        run: |
-          cd /home/${{ env.USER_SERVER }}
-          git clone https://${{ secrets.GIT_USER }}:${{ secrets.GIT_TOKEN }}@github.com/${{ env.ID_GITHUB }}/${{ env.REPOSITORY_NAME }}.git
+      #- name: clone repository
+      #  continue-on-error: true
+      #  run: |
+      #    cd /home/${{ env.USER_SERVER }}
+      #    git clone https://${{ secrets.GIT_USER }}:${{ secrets.GIT_TOKEN }}@github.com/${{ env.ID_GITHUB }}/${{ env.REPOSITORY_NAME }}.git
       
-      - name: update repository
-        run: |
-          cd /home/${{ env.USER_SERVER }}/${{ env.REPOSITORY_NAME }}
-          git pull https://${{ secrets.GIT_USER }}:${{ secrets.GIT_TOKEN }}@github.com/${{ env.ID_GITHUB }}/${{ env.REPOSITORY_NAME }}.git
+      #- name: update repository
+      #  run: |
+      #    cd /home/${{ env.USER_SERVER }}/${{ env.REPOSITORY_NAME }}
+      #    git pull https://${{ secrets.GIT_USER }}:${{ secrets.GIT_TOKEN }}@github.com/${{ env.ID_GITHUB }}/${{ env.REPOSITORY_NAME }}.git
 
       # read version from VERSION file
       - name: Read VERSION file
