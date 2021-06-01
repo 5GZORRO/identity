@@ -65,7 +65,7 @@ jobs:
 
   publish_package_HOLDER:
     needs: [publish_package_ISSUER]
-    runs-on: teste
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2 
 
