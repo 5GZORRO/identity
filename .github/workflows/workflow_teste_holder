@@ -1,15 +1,18 @@
 name: workflow_teste_holder
-on: push
+
+on:
+  push:
+    branches: [ main ]
+    
 env:
-  #REPOSITORY_NAME: identity
   REPOSITORY_NAME_LC: identity
   ID_GITHUB: 5gzorro
-
   IMAGE_NAME: 5g-zorro-teste-agent_holder  
   DOCKER_NAME: Dockerfile_holder
+  
 jobs:
   publish_package: 
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     steps:
       - uses: actions/checkout@v2 
       # read version from VERSION file
