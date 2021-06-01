@@ -37,7 +37,7 @@ jobs:
       # build docker image
       - name: Build image
         run: |
-          cd /home/ubuntu/${{ env.REPOSITORY_NAME }}/src
+          cd ${{ env.REPOSITORY_NAME }}/src
           sudo docker build -t ${{ env.IMAGE_NAME_ISSUER }} -f ${{ env.DOCKER_NAME_ISSUER }} .
       # delete old package version
       - uses: actions/delete-package-versions@v1
@@ -76,7 +76,7 @@ jobs:
       # build docker image
       - name: Build image
         run: |
-          cd /home/ubuntu/${{ env.REPOSITORY_NAME }}/src
+          cd ${{ env.REPOSITORY_NAME }}/src
           sudo docker build -t ${{ env.IMAGE_NAME_HOLDER }} -f ${{ env.DOCKER_NAME_HOLDER }} .
       # delete old package version
       - uses: actions/delete-package-versions@v1
