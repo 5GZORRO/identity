@@ -48,7 +48,7 @@ jobs:
       - name: Publish image
         run: |
           docker login -u ${{ secrets.GIT_USER }} -p ${{ secrets.GIT_TOKEN }} docker.pkg.github.com
-          docker tag ${{ env.IMAGE_NAME_ISSUER }} docker.pkg.github.com/${{ env.ID_GITHUB }}/${{ env.REPOSITORY_NAME_LC }}/${{ env.IMAGE_NAME_ISSUER }}:${{ steps.getversion.outputs.version }}
+          docker tag ${{ env.IMAGE_NAME_ISSUER }} docker.pkg.github.com/${{ env.ID_GITHUB }}/${{ env.REPOSITORY_NAME_LC }}/${{ env.IMAGE_NAME_ISSUER }}:latest docker.pkg.github.com/${{ env.ID_GITHUB }}/${{ env.REPOSITORY_NAME_LC }}/${{ env.IMAGE_NAME_ISSUER }}:${{ steps.getversion.outputs.version }}
           docker push docker.pkg.github.com/${{ env.ID_GITHUB }}/${{ env.REPOSITORY_NAME_LC }}/${{ env.IMAGE_NAME_ISSUER }}:${{ steps.getversion.outputs.version }}
       # create release
       - name: Create Release
@@ -87,7 +87,7 @@ jobs:
       - name: Publish image
         run: |
           docker login -u ${{ secrets.GIT_USER }} -p ${{ secrets.GIT_TOKEN }} docker.pkg.github.com
-          docker tag ${{ env.IMAGE_NAME_HOLDER }} docker.pkg.github.com/${{ env.ID_GITHUB }}/${{ env.REPOSITORY_NAME_LC }}/${{ env.IMAGE_NAME_HOLDER }}:${{ steps.getversion.outputs.version }}
+          docker tag ${{ env.IMAGE_NAME_HOLDER }} docker.pkg.github.com/${{ env.ID_GITHUB }}/${{ env.REPOSITORY_NAME_LC }}/${{ env.IMAGE_NAME_HOLDER }}:latest docker.pkg.github.com/${{ env.ID_GITHUB }}/${{ env.REPOSITORY_NAME_LC }}/${{ env.IMAGE_NAME_HOLDER }}:${{ steps.getversion.outputs.version }}
           docker push docker.pkg.github.com/${{ env.ID_GITHUB }}/${{ env.REPOSITORY_NAME_LC }}/${{ env.IMAGE_NAME_HOLDER }}:${{ steps.getversion.outputs.version }}
       # create release
       - name: Create Release
