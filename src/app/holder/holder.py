@@ -385,8 +385,25 @@ async def update_did_state(request_id: str, body: dict, response: Response):
     #UPDATE MONGO RECORD
     try:
         #print(body)
-        mongo_setup_provider.collection.find_one_and_update({'_id': ObjectId(request_id)}, {'$set': {"state": "Credential Issued", "credential_definition_id": body["credential_definition_id"]}}) # UPDATE REQUEST RECORD FROM MONGO
+        mongo_setup_provider.collection.find_one_and_update({'_id': ObjectId(request_id)}, {'$set': {"state": "Credential Issued", "credential_definition_id": body["credential_definition_id"], "credential_exchange_id": body["credential_exchange_id"]}}) # UPDATE REQUEST RECORD FROM MONGO
         subscriber = mongo_setup_provider.collection.find_one({"_id": ObjectId(request_id)})
+        #print(subscriber["handler_url"])
+    except:
+        return "Unable to update Mongo record"
+    
+    # SEND REQUEST RECORD TO HOLDER HANDLER
+    try:
+        requests.post(subscriber["handler_url"], headers=header, json=body, timeout=30)
+    except:
+        return "Unable to send info to Holder Handler"
+
+@router.post("/update_revoked_state/{credential_exchange_id}", include_in_schema=False)
+async def update_revoked_state(credential_exchange_id: str, body: dict, response: Response):
+    #UPDATE MONGO RECORD
+    try:
+        #print(body)
+        mongo_setup_provider.collection.find_one_and_update({'credential_exchange_id': credential_exchange_id}, {'$set': {"revoked": True}}) # UPDATE REQUEST RECORD FROM MONGO
+        subscriber = mongo_setup_provider.collection.find_one({"credential_exchange_id": credential_exchange_id})
         #print(subscriber["handler_url"])
     except:
         return "Unable to update Mongo record"
@@ -449,7 +466,7 @@ async def read_specific_credential(response: Response, did_identifier: str): #, 
     #    return "Unable to fetch specific Marketplace Credential"
 
     try:
-        subscriber = mongo_setup_provider.collection.find_one({"credentialSubject.id": did_identifier, "state": "Credential Issued"}, {"_id": 0, "state": 0, "handler_url": 0})
+        subscriber = mongo_setup_provider.collection.find_one({"credentialSubject.id": did_identifier, "state": "Credential Issued"}, {"_id": 0, "state": 0, "handler_url": 0, "credential_exchange_id": 0})
         if subscriber == None:
             return "Marketplace Credential not issued"
         else: 
@@ -489,8 +506,7 @@ async def read_all_credentials(response: Response): #, token: str, handler_url: 
     #    return "Unable to fetch Marketplace Credentials"
     
     try:
-        subscriber = mongo_setup_provider.collection.find({"state": "Credential Issued"}, {"_id": 0, "state": 0, "handler_url": 0})
-        
+        subscriber = mongo_setup_provider.collection.find({"state": "Credential Issued", "revoked" : { "$exists" : False}}, {"_id": 0, "state": 0, "handler_url": 0, "credential_exchange_id": 0})
         result_list = []
 
         for result_object in subscriber:
@@ -503,14 +519,17 @@ async def read_all_credentials(response: Response): #, token: str, handler_url: 
         return "Unable to fetch Marketplace Credentials"
 
 
-@router.put("/revoke")
-async def revoke_credential():
-    return "Awaiting Implementation"
-
-@router.get("/read/revoke")
+@router.get("/read_did/revoked")
 async def read_revoked_credential():
-    return "Awaiting Implementation"
+    try:
+        subscriber = mongo_setup_provider.collection.find({"revoked" : { "$exists" : True}}, {"_id": 0, "state": 0, "handler_url": 0, "credential_exchange_id": 0, "revoked": 0})
+        result_list = []
 
-@router.delete("/remove")
-async def remove_credential():
-    return "Awaiting Implementation"
+        for result_object in subscriber:
+            #print(result_object)
+            result_list.append(result_object)
+
+        return result_list
+
+    except:
+        return "Unable to fetch specific Marketplace Credential"

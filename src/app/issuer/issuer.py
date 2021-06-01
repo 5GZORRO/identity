@@ -31,6 +31,8 @@ class IssueCred(BaseModel):
     service_endpoint: str
     #handler_url: str
 
+class RevokeCred(BaseModel):
+    cred_exchange_id: str
 
 ##### Stakeholder Registry Classes #####
 class ReqStakeCred(BaseModel):
@@ -85,9 +87,9 @@ async def request_credential_issue(request_id: str, response: Response, body: Re
                 "claims": body_dict["credentialSubject"]["claims"]
             },
             "timestamp": body_dict["timestamp"],
-            "state": "Credential Requested"
+            "state": "Credential Requested",
             #"handler_url": body_dict["handler_url"]
-            #"service_endpoint": body_dict["service_endpoint"]
+            "service_endpoint": body_dict["service_endpoint"]
         }
 
         mongo_setup_admin.collection.insert_one(res_to_insert_db)
@@ -163,7 +165,7 @@ async def issue_requested_credential(request_id: str, response: Response, body: 
             # SUBSCRIBE TO AGENT RESPONSE
             try:
                 # UPDATE REQUEST RECORD FROM MONGO
-                mongo_setup_admin.collection.find_one_and_update({'_id': ObjectId(request_id)}, {'$set': {"state": "Credential Issued", "credential_definition_id": cred_info["credential_definition_id"]}})
+                mongo_setup_admin.collection.find_one_and_update({'_id': ObjectId(request_id)}, {'$set': {"state": "Credential Issued", "credential_definition_id": cred_info["credential_definition_id"], "credential_exchange_id": cred_info["credential_exchange_id"]}})
                 #mongo_setup.collection.remove({"_id": ObjectId(request_id)})
 
                 resp_cred = {
@@ -225,17 +227,70 @@ async def read_all_credentials(response: Response): #, token: str
     except:
         return "Unable to fetch Marketplace Credentials"
 
-@router.put("/revoke")
-async def revoke_credential():
-    return "Awaiting Implementation"
+@router.put("/revoke_did")
+async def revoke_credential(response: Response, body: RevokeCred):
+    # CHECK FOR REQUEST RECORD
+    try:
+        body_dict = body.dict()
+        subscriber = mongo_setup_admin.collection.find_one({"credential_exchange_id": body_dict["cred_exchange_id"]}, {"_id":0})
+        #return subscriber
+        if subscriber == None:
+            return "Credential doesn't exist in Database or hasn't been issued yet."
+    except:
+        return "Unable to find Credential."
 
-@router.get("/read/revoke")
+    # CHECK IF CRED IS ALREADY REVOKED
+    try:
+        if "revoked" in subscriber:
+            response.status_code = status.HTTP_409_CONFLICT
+            return "Credential already revoked."
+    except:
+        return "Unable to check if Credential is revoked."   
+
+    # REVOKE CREDENTIAL
+    try:
+        # Configure Credential to be published
+        revoke_cred = {
+            "cred_ex_id": subscriber["credential_exchange_id"],
+            "publish": True
+        }
+        URL = os.environ["ISSUER_AGENT_URL"]
+        final_resp = requests.post(URL+"/revocation/revoke", data=json.dumps(revoke_cred), headers=header, timeout=60)
+        #revoke_info = json.loads(final_resp.text)
+        #return revoke_info
+    except:
+        return "Unable to revoke Credential."
+
+    # UPDATE CRED INFO
+    try:
+        mongo_setup_admin.collection.find_one_and_update({"credential_exchange_id": subscriber["credential_exchange_id"]}, {'$set': {"revoked": True}})
+        resp_revoke = {
+            "credential_exchange_id": subscriber["credential_exchange_id"],
+            "revoked": True
+        }
+    except:        
+        return "Unable to subscribe to response."
+
+    # NOTIFY HOLDER AGENT
+    holder_url = subscriber["service_endpoint"]
+    #print(holder_url)
+    requests.post(holder_url+"/holder/update_revoked_state/"+str(subscriber["credential_exchange_id"]), json=resp_revoke, timeout=60)
+    
+    return resp_revoke
+
+@router.get("/read_did/revoked")
 async def read_revoked_credential():
-    return "Awaiting Implementation"
+    try:
+        subscriber = mongo_setup_admin.collection.find({"revoked" : { "$exists" : True}}, {"_id": 0, "state": 0, "handler_url": 0, "service_endpoint": 0, "credential_exchange_id": 0, "revoked": 0})
+        result_list = []
 
-@router.delete("/remove")
-async def remove_credential():
-    return "Awaiting Implementation"
+        for result_object in subscriber:
+            result_list.append(result_object)
+
+        return result_list
+
+    except:
+        return "Unable to fetch specific Marketplace Credential"
 
 
 ####################### Stakeholder Registration Management #######################
@@ -287,9 +342,9 @@ async def request_stakeholder_issue(request_id: str, response: Response, body: R
                 #"verkey": body_dict["stakeholderClaim"]["verkey"]
             },
             "timestamp": body_dict["timestamp"],
-            "state": "Stakeholder Registration Requested"
+            "state": "Stakeholder Registration Requested",
             #"handler_url": body_dict["handler_url"]
-            #"service_endpoint": body_dict["service_endpoint"]
+            "service_endpoint": body_dict["service_endpoint"]
         }
 
         mongo_setup_admin.stakeholder_col.insert_one(res_to_insert_db)

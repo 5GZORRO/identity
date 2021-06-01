@@ -24,7 +24,7 @@ def vc_setup():
           "timestamp"
         ],
         "schema_version": "1.0",
-        "schema_name": "verifiable_cred"
+        "schema_name": "verifiable_cred_with_revoke"
       }
       
       URL = os.environ["ISSUER_AGENT_URL"]
@@ -37,8 +37,9 @@ def vc_setup():
       
       # POST Credential Definition
       cred_definition = {
-        "support_revocation": False,
-        "tag": "verifiable_cred",
+        "revocation_registry_size": 32000,
+        "support_revocation": True,
+        "tag": "verifiable_cred_with_revoke",
         "schema_id": schema_id_value
       }
       
