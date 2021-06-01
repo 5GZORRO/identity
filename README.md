@@ -21,7 +21,7 @@ Repository of 5G ZORRO Identity and Permissions Manager components source code.
 ### Install Git
 ```python
 sudo apt-get update
-```()
+```
 ```python
 sudo apt-get install git
 ```
