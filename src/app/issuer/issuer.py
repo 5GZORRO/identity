@@ -227,7 +227,7 @@ async def read_all_credentials(response: Response): #, token: str
     except:
         return "Unable to fetch Marketplace Credentials"
 
-@router.put("/revoke_did")
+@router.put("/revoke_did", include_in_schema=False)
 async def revoke_credential(response: Response, body: RevokeCred):
     # CHECK FOR REQUEST RECORD
     try:
@@ -278,7 +278,7 @@ async def revoke_credential(response: Response, body: RevokeCred):
     
     return resp_revoke
 
-@router.get("/read_did/revoked")
+@router.get("/read_did/revoked", include_in_schema=False)
 async def read_revoked_credential():
     try:
         subscriber = mongo_setup_admin.collection.find({"revoked" : { "$exists" : True}}, {"_id": 0, "state": 0, "handler_url": 0, "service_endpoint": 0, "credential_exchange_id": 0, "revoked": 0})

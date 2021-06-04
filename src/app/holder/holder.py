@@ -270,19 +270,19 @@ async def read_stakeholder_status(response: Response): # key: str, stakeholder_d
         #body_dict = body.dict()
         #subscriber = mongo_setup_provider.stakeholder_col.find_one({"stakeholderClaim.stakeholderDID": body_dict["stakeholderDID"]}, {"_id": 0, "handler_url": 0})
         
-        result_list = []
+        #result_list = []
         
-        subscriber = mongo_setup_provider.stakeholder_col.find({"revoked" : { "$exists" : False} }, {"_id": 0, "handler_url": 0})
-        #if subscriber == None:
-        #    response.status_code = status.HTTP_404_NOT_FOUND
-        #    return "Stakeholder Credential non existent"
-        #else: 
-        #    return subscriber
+        subscriber = mongo_setup_provider.stakeholder_col.find_one({"revoked" : { "$exists" : False} }, {"_id": 0, "handler_url": 0})
+        if subscriber == None:
+            response.status_code = status.HTTP_404_NOT_FOUND
+            return "Active Stakeholder Credential non existent or not found"
+        else: 
+            return subscriber
 
-        for result_object in subscriber:
-            result_list.append(result_object)
+        #for result_object in subscriber:
+        #    result_list.append(result_object)
 
-        return result_list
+        #return result_list
 
     except:
         return "Unable to fetch requested Stakeholder Credential"
@@ -510,7 +510,7 @@ async def read_all_credentials(response: Response): #, token: str, handler_url: 
         result_list = []
 
         for result_object in subscriber:
-            print(result_object)
+            #print(result_object)
             result_list.append(result_object)
 
         return result_list
@@ -519,7 +519,7 @@ async def read_all_credentials(response: Response): #, token: str, handler_url: 
         return "Unable to fetch Marketplace Credentials"
 
 
-@router.get("/read_did/revoked")
+@router.get("/read_did/revoked", include_in_schema=False)
 async def read_revoked_credential():
     try:
         subscriber = mongo_setup_provider.collection.find({"revoked" : { "$exists" : True}}, {"_id": 0, "state": 0, "handler_url": 0, "credential_exchange_id": 0, "revoked": 0})
