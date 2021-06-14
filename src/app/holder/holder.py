@@ -39,6 +39,7 @@ class Role(str, Enum):
     Resource_Consumer = 'ResourceConsumer'
     Service_Provider = 'ServiceProvider'
     Service_Consumer = 'ServiceConsumer'
+    Administrator = 'Administrator'
 
 ### Assets -> Enums ###
 class Assets(str, Enum):
