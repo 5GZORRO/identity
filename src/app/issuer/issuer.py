@@ -1,6 +1,5 @@
 from typing import Optional
 from fastapi import APIRouter, Response, status
-from pydantic import BaseModel
 import requests, json, os
 
 from bson import ObjectId
@@ -9,48 +8,18 @@ from app.db import mongo_setup_admin
 from app.bootstrap import setup_issuer, setup_vc_schema, setup_stake_schema
 #from app.authentication import authentication
 
+# classes
+from app.issuer.classes import ReqCred, IssueCred, RevokeCred, ReqStakeCred, IssueStakeCred
+
 router = APIRouter(
     prefix="/issuer",
     tags=["issuer"]
 )
 
-##### Credential Issuing Classes #####
-class ReqCred(BaseModel):
-    type: str
-    credentialSubject: dict
-    timestamp: str
-    service_endpoint: str
-    agent_service_endpoint: str
-    #handler_url: str
-
-class IssueCred(BaseModel):
-    holder_request_id: str
-    type: str
-    credentialSubject: dict
-    timestamp: str
-    service_endpoint: str
-    #handler_url: str
-
-class RevokeCred(BaseModel):
-    cred_exchange_id: str
-
-##### Stakeholder Registry Classes #####
-class ReqStakeCred(BaseModel):
-    stakeholderClaim: dict
-    timestamp: str
-    service_endpoint: str
-    agent_service_endpoint: str
-
-class IssueStakeCred(BaseModel):
-    holder_request_id: str
-    stakeholderClaim: dict
-    timestamp: str
-    service_endpoint: str
-
-
 header = {
     'Content-Type': 'application/json'        
 }
+
 
 ####################### Verifiable Credentials Management #######################
 @router.post("/request_credential_issue/{request_id}", include_in_schema=False)
@@ -197,37 +166,51 @@ async def issue_requested_credential(request_id: str, response: Response, body: 
     except:
         return "Unable to connect to Issuer Agent"
 
-@router.get("/read_credential")
-async def read_credential(response: Response, cred_id: str): #token: str,
+@router.get("/read_issued_did")
+async def read_issued_did(response: Response, did_identifier: str): #token: str,
     #if token != authentication.id_token:
     #    response.status_code = status.HTTP_401_UNAUTHORIZED
     #    return "Invalid ID Token"
 
     try:
-        URL = os.environ["HOLDER_AGENT_URL"]
-        resp = requests.get(URL+"/credential/"+cred_id, timeout=30)
-        body = resp.json()
-        return body
+        #URL = os.environ["HOLDER_AGENT_URL"]
+        #resp = requests.get(URL+"/credential/"+cred_id, timeout=30)
+        #body = resp.json()
+        #return body
+        
+        subscriber = mongo_setup_admin.collection.find_one({"credentialSubject.id": did_identifier, "state": "Credential Issued", "revoked" : {"$exists" : False}}, {"_id": 0, "holder_request_id":0, "state": 0, "service_endpoint": 0})
+        if subscriber == None:
+            return "Marketplace Credential revoked or not issued"
+        else: 
+            return subscriber
 
     except:
-        return "Unable to fetch specific Marketplace Credential"
+        return "Unable to fetch specific issued Marketplace Credential"
 
-@router.get("/read_credential/all")
-async def read_all_credentials(response: Response): #, token: str
+@router.get("/read_issued_did/all")
+async def read_all_issued_did(response: Response): #, token: str
     #if token != authentication.id_token:
     #    response.status_code = status.HTTP_401_UNAUTHORIZED
     #    return "Invalid ID Token"
 
     try:
-        URL = os.environ["HOLDER_AGENT_URL"]
-        resp = requests.get(URL+"/credentials", timeout=30)
-        body = resp.json()
-        return body
+        #URL = os.environ["HOLDER_AGENT_URL"]
+        #resp = requests.get(URL+"/credentials", timeout=30)
+        #body = resp.json()
+        #return body
+        subscriber = mongo_setup_admin.collection.find({"state": "Credential Issued", "revoked" : {"$exists" : False}}, {"_id": 0, "holder_request_id":0, "state": 0, "service_endpoint": 0})
+        result_list = []
+
+        for result_object in subscriber:
+            #print(result_object)
+            result_list.append(result_object)
+
+        return result_list
 
     except:
-        return "Unable to fetch Marketplace Credentials"
+        return "Unable to fetch issued Marketplace Credentials"
 
-@router.put("/revoke_did", include_in_schema=False)
+@router.put("/revoke_did")
 async def revoke_credential(response: Response, body: RevokeCred):
     # CHECK FOR REQUEST RECORD
     try:
@@ -278,10 +261,10 @@ async def revoke_credential(response: Response, body: RevokeCred):
     
     return resp_revoke
 
-@router.get("/read_did/revoked", include_in_schema=False)
+@router.get("/read_did/revoked")
 async def read_revoked_credential():
     try:
-        subscriber = mongo_setup_admin.collection.find({"revoked" : { "$exists" : True}}, {"_id": 0, "state": 0, "handler_url": 0, "service_endpoint": 0, "credential_exchange_id": 0, "revoked": 0})
+        subscriber = mongo_setup_admin.collection.find({"revoked" : { "$exists" : True}}, {"_id": 0, "holder_request_id":0, "state": 0, "service_endpoint": 0, "revoked": 0})
         result_list = []
 
         for result_object in subscriber:

@@ -1,8 +1,5 @@
-from typing import Optional, List
 from fastapi import APIRouter, Response, status
-from pydantic import BaseModel
-import requests, json, sys, os, time, threading
-from enum import Enum
+import requests, json, sys, os, time, threading, copy
 
 from bson import ObjectId
 
@@ -10,89 +7,16 @@ from bson import ObjectId
 from app.db import mongo_setup_provider
 from app.bootstrap.key import holder_key
 
+# classes
+from app.holder.classes import Stakeholder, Offer, ReadOfferDID
+
 router = APIRouter(
     prefix="/holder",
     tags=["holder"]
 )
 
-### Role -> Enums ###
-class Type(str, Enum):
-    product_offer = 'ProductOffer'
-    regulated_product_offer = 'RegulatedProductOffer'
-    governance_proposal = 'GovernanceProposal'
-    governance_vote = 'GovernanceVote'
-    legal_prose_template = 'LegalProseTemplate'
-    sla = 'SLA'
-    agreement = 'Agreement'
-
-class Offer(BaseModel):
-    token: str
-    type: Type
-    #claims: dict
-    claims: list = []
-    handler_url: str
-
-### Role -> Enums ###
-class Role(str, Enum):
-    Regulator = 'Regulator'
-    Resource_Provider = 'ResourceProvider'
-    Resource_Consumer = 'ResourceConsumer'
-    Service_Provider = 'ServiceProvider'
-    Service_Consumer = 'ServiceConsumer'
-    Administrator = 'Administrator'
-
-### Assets -> Enums ###
-class Assets(str, Enum):
-    InformationResource = 'InformationResource'
-    SpectrumResource = 'SpectrumResource'
-    PhysicalResource = 'PhysicalResource'
-    NetworkFunction = 'NetworkFunction'
-
-### notificationType -> Enum ###
-class NType(str, Enum):
-    EMAIL = 'EMAIL'
-
-class SHRoles(BaseModel):
-    #role: str
-    role: Role
-    assets: List[Assets]
-    #assets: str
-
-class SHServices(BaseModel):
-    type: str
-    endpoint: str
-
-class SHNotify(BaseModel):
-    notificationType: NType
-    distributionList: str
-
-class SHProfile(BaseModel):
-    name: str
-    ledgerIdentity: str
-    address: str
-    notificationMethod: SHNotify
-
-class Stakeholder(BaseModel):
-    key: str
-    governanceBoardDID: str
-    #stakeholderServices: list = []
-    stakeholderServices: List[SHServices]
-    stakeholderRoles: List[SHRoles]
-    #stakeholderRoles: SHRoles
-    stakeholderProfile: SHProfile
-    handler_url: str
-
-
-class ReadStakeDID(BaseModel):
-    stakeholderDID: str
-
-class ReadOfferDID(BaseModel):
-    token: str
-    did_identifier: str
-
-
 header = {
-    'Content-Type': 'application/json'        
+    'Content-Type': 'application/json'
 }
 
 
@@ -156,6 +80,7 @@ async def register_stakeholder(response: Response, body: Stakeholder): #key: str
             "state": "Stakeholder Registration Requested",
             "handler_url": body_dict["handler_url"]
         }
+        client_res = copy.deepcopy(res_to_mongo)
 
         mongo_setup_provider.stakeholder_col.insert_one(res_to_mongo)
 
@@ -194,31 +119,6 @@ async def register_stakeholder(response: Response, body: Stakeholder): #key: str
         URL = os.environ["ADMIN_AGENT_CONTROLLER_URL"]
         requests.post(URL+"/issuer/request_stakeholder_issue/"+str(res_to_mongo["_id"]), json=res_to_admin, timeout=60)
        
-
-        client_res = {
-            #"_id": str(res_to_mongo["_id"]),
-            "stakeholderClaim": {
-                "governanceBoardDID": body_dict["governanceBoardDID"],
-                "stakeholderServices": body_dict["stakeholderServices"],
-                #"stakeholderRoles": {
-                #    "role": body_dict["stakeholderRoles"]["role"],
-                #    "assets": body_dict["stakeholderRoles"]["assets"]
-                #},
-                "stakeholderRoles": body_dict["stakeholderRoles"],
-                "stakeholderProfile": {
-                    "name": body_dict["stakeholderProfile"]["name"],
-                    "ledgerIdentity": body_dict["stakeholderProfile"]["ledgerIdentity"],
-                    "address": body_dict["stakeholderProfile"]["address"],
-                    "notificationMethod": body_dict["stakeholderProfile"]["notificationMethod"]
-                },
-                "stakeholderDID": did
-                #"did": did,
-                #"verkey": verkey
-            },
-            "timestamp": epoch_ts,
-            "state": "Stakeholder Registration Requested",
-            "handler_url": body_dict["handler_url"]
-        }
 
         # SEND TO HOLDER HANDLER
         #try:
@@ -327,6 +227,8 @@ async def request_credential(response: Response, body: Offer):
             "state": "Credential Requested",
             "handler_url": body_dict["handler_url"]
         }
+        client_res = copy.deepcopy(res_to_mongo)
+
         mongo_setup_provider.collection.insert_one(res_to_mongo)
 
     except:
@@ -355,18 +257,7 @@ async def request_credential(response: Response, body: Offer):
         #if "detail" in body:
         #    return "Unable to access Credential issuing request endpoint"
 
-        client_res = {
-            #"_id": str(res_to_mongo["_id"]),
-            "type": body_dict["type"],
-            "credentialSubject": {
-                "id": did,
-                "claims": body_dict["claims"]
-            },
-            "timestamp": epoch_ts,
-            "state": "Credential Requested",
-            "handler_url": body_dict["handler_url"]
-        }
-        
+       
         # SEND TO HOLDER HANDLER
         #try:
         #    holder_handler_resp = requests.post(body_dict["handler_url"], headers=header, json=client_res, timeout=30)
@@ -467,7 +358,7 @@ async def read_specific_credential(response: Response, did_identifier: str): #, 
     #    return "Unable to fetch specific Marketplace Credential"
 
     try:
-        subscriber = mongo_setup_provider.collection.find_one({"credentialSubject.id": did_identifier, "state": "Credential Issued"}, {"_id": 0, "state": 0, "handler_url": 0, "credential_exchange_id": 0})
+        subscriber = mongo_setup_provider.collection.find_one({"credentialSubject.id": did_identifier, "state": "Credential Issued", "revoked" : {"$exists" : False}}, {"_id": 0, "state": 0, "handler_url": 0, "credential_exchange_id": 0})
         if subscriber == None:
             return "Marketplace Credential not issued"
         else: 
@@ -520,7 +411,7 @@ async def read_all_credentials(response: Response): #, token: str, handler_url: 
         return "Unable to fetch Marketplace Credentials"
 
 
-@router.get("/read_did/revoked", include_in_schema=False)
+@router.get("/read_did/revoked")
 async def read_revoked_credential():
     try:
         subscriber = mongo_setup_provider.collection.find({"revoked" : { "$exists" : True}}, {"_id": 0, "state": 0, "handler_url": 0, "credential_exchange_id": 0, "revoked": 0})
