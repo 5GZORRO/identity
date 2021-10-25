@@ -33,13 +33,13 @@ async def register_stakeholder(response: Response, body: Stakeholder): #key: str
         return "Unable to authenticate used key."
 
     # CHECK FOR ACTIVE STAKE CRED
-    try:
-        subscriber = mongo_setup_provider.stakeholder_col.find_one({"revoked" : { "$exists" : False} }, {"_id": 0, "handler_url": 0})
-        if subscriber != None:
-            response.status_code = status.HTTP_409_CONFLICT
-            return "A Stakeholder Credential has already been requested/issued"
-    except:
-        return "Unable to check for active stakeholder credential"
+    #try:
+    #    subscriber = mongo_setup_provider.stakeholder_col.find_one({"revoked" : { "$exists" : False} }, {"_id": 0, "handler_url": 0})
+    #    if subscriber != None:
+    #        response.status_code = status.HTTP_409_CONFLICT
+    #        return "A Stakeholder Credential has already been requested/issued"
+    #except:
+    #    return "Unable to check for active stakeholder credential"
 
     # PRIVATE DID
     try:
@@ -171,19 +171,20 @@ async def read_stakeholder_status(response: Response): # key: str, stakeholder_d
         #body_dict = body.dict()
         #subscriber = mongo_setup_provider.stakeholder_col.find_one({"stakeholderClaim.stakeholderDID": body_dict["stakeholderDID"]}, {"_id": 0, "handler_url": 0})
         
-        #result_list = []
+        result_list = []
         
-        subscriber = mongo_setup_provider.stakeholder_col.find_one({"revoked" : { "$exists" : False} }, {"_id": 0, "handler_url": 0})
-        if subscriber == None:
-            response.status_code = status.HTTP_404_NOT_FOUND
-            return "Active Stakeholder Credential non existent or not found"
-        else: 
-            return subscriber
+        subscriber = mongo_setup_provider.stakeholder_col.find({"revoked" : { "$exists" : False} }, {"_id": 0, "handler_url": 0})
+        #subscriber = mongo_setup_provider.stakeholder_col.find_one({"revoked" : { "$exists" : False} }, {"_id": 0, "handler_url": 0})
+        #if subscriber == None:
+        #    response.status_code = status.HTTP_404_NOT_FOUND
+        #    return "Active Stakeholder Credential non existent or not found"
+        #else: 
+        #    return subscriber
 
-        #for result_object in subscriber:
-        #    result_list.append(result_object)
+        for result_object in subscriber:
+            result_list.append(result_object)
 
-        #return result_list
+        return result_list
 
     except:
         return "Unable to fetch requested Stakeholder Credential"

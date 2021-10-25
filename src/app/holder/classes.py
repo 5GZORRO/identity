@@ -50,9 +50,9 @@ class SHRoles(BaseModel):
     assets: List[Assets]
     #assets: str
 
-class SHServices(BaseModel):
-    type: str
-    endpoint: str
+#class SHServices(BaseModel):
+#    type: str
+#    endpoint: str
 
 class SHProfile(BaseModel):
     name: str
@@ -63,8 +63,8 @@ class SHProfile(BaseModel):
 class Stakeholder(BaseModel):
     key: str
     governanceBoardDID: str
-    #stakeholderServices: list = []
-    stakeholderServices: List[SHServices]
+    stakeholderServices: List = []
+    #stakeholderServices: List[SHServices]
     stakeholderRoles: List[SHRoles]
     #stakeholderRoles: SHRoles
     stakeholderProfile: SHProfile
