@@ -2,11 +2,17 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.responses import RedirectResponse
-
 import json
 
+#Log Configuration
+from loguru import logger
+from app.config import log_config
+
+logger.remove()
+logger.add("./app/logs/file_holder_agent.log", format="{time:YYYY-MM-DD at HH:mm:ss} | {level}: {message} | {function} in line {line} on {file}", rotation="5 MB")
+
 #Verification Key
-from app.bootstrap.key import holder_key
+from app.bootstrap.key import holder_key, public_key
 #Database Setup
 from app.db import mongo_setup_provider
 #Connection First
@@ -15,14 +21,11 @@ from app.db import mongo_setup_provider
 #from app.bootstrap import setup_vc_schema
 
 
-#from app.did import did
-from app.authentication import send_proof
-from app.holder import holder
-
+from app.authentication import send_proof, get_public_key
+from app.holder import holder_stakeholder, holder_did
 
 with open('app/openapi/openapi_trading_provider.json') as json_file:
     tags_metadata = json.load(json_file)
-
 
 app = FastAPI(
     docs_url="/",
@@ -51,12 +54,10 @@ app.add_middleware(
 
 ######## Routes to Endpoints in Different Files ########
 #app.include_router(did.router)
+app.include_router(get_public_key.router)
 app.include_router(send_proof.router)
-app.include_router(holder.router)
+app.include_router(holder_stakeholder.router)
+app.include_router(holder_did.router)
 
 holder_key.holder_key_create()
-
-#@app.get("/", include_in_schema=False)
-#def redirect_main():
-#    response = RedirectResponse(url='/provider')
-#    return response
+public_key.public_key_create()

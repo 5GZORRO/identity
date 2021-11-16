@@ -1,12 +1,14 @@
 from pymongo import MongoClient
 import os, sys
+from loguru import logger
 
 try: 
 	conn = MongoClient(os.environ["DATABASE_ADDRESS"], int(os.environ["DATABASE_PORT"])) #host.docker.internal, 27017 
-	print("Connected successfully to MongoDB") 
-except: 
-	print("Could not connect to MongoDB")
-	sys.exit() 
+	logger.info("Successfully connected to Holder MongoDB") 
+
+except Exception as error:
+	logger.error(error)
+	sys.exit()
 
 # database name: provider
 db = conn.provider 

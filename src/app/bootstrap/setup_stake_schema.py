@@ -1,21 +1,13 @@
 import requests, json, time, sys, os
-
-def general_message(status, message, code):
-    response = {"status": status, "message": message, "code": code}
-    return json.dumps(response, indent = 4)
+from loguru import logger
 
 header = {
     'Content-Type': 'application/json'        
 }
 
 def stakeholder_cred_setup():
-    print("\n")
-    print("#############################################################")
-    print("############ STAKEHOLDER CREDENTIAL SCHEMA SETUP ############")
-    print("#############################################################")
-
+    # POST AUTH Schema
     try:
-        # POST AUTH Schema
         schema = {
             "attributes": [
                 "stakeholderClaim",
@@ -31,9 +23,12 @@ def stakeholder_cred_setup():
         
         schema = json.loads(resp.text)
         schema_id_value = schema["schema_id"]
-        #print(schema_id_value)
-        
-        # POST Credential Definition
+    
+    except Exception as error:
+        logger.error(error)
+
+    # POST Credential Definition
+    try:
         cred_definition = {
         "support_revocation": False,
         "tag": "stakeholder_cred",
@@ -45,6 +40,7 @@ def stakeholder_cred_setup():
         cred_definition = json.loads(cred_def_resp.text)
         global cred_def_id
         cred_def_id = cred_definition["credential_definition_id"]
+        logger.info("Stakeholder Credential Definition id: " + str(cred_def_id))
         '''
         # POST AUTH Credential 
         issue_cred = {
@@ -72,12 +68,5 @@ def stakeholder_cred_setup():
         print("ID TOKEN: "+ str(id_token))
         '''
 
-    except:
-        print(general_message("error", "Unable to emit Admin Auth Credential.", 400))
-        sys.exit()
-
-    #id_token = "develop_teste"
-    #print("ID TOKEN: "+ str(id_token))
-    print("STAKEHOLDER CRED DEF ID: " + str(cred_def_id))
-    print("############## STAKEHOLDER CREDENTIAL SCHEMA SETUP - END ##############")
-    print("\n")
+    except Exception as error:
+        logger.error(error)

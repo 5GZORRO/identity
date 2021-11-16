@@ -6,10 +6,12 @@ services:
         #networks:
         #    front:
         #        ipv4_address: 172.220.18.0
-        command: uvicorn app.main_admin:app --reload --workers 1 --host 0.0.0.0 --port 8000
+        command: uvicorn app.main_admin:app --reload --workers 1 --host 0.0.0.0 --port 8000 --log-level error
         ports:
             - "6200:8000"
         restart: always
+        volumes:
+            - "./app/logs:/usr/src/app/app/logs"
         env_file:
             - .env_admin
         depends_on:
@@ -38,10 +40,12 @@ services:
     trading_provider_agent:
         build: ./
         container_name: trading_provider_agent
-        command: uvicorn app.main_trading_provider:app --reload --workers 1 --host 0.0.0.0 --port 8000
+        command: uvicorn app.main_trading_provider:app --reload --workers 1 --host 0.0.0.0 --port 8000 --log-level error
         ports:
             - "6800:8000"
         restart: always
+        volumes:
+            - "./app/logs:/usr/src/app/app/logs"
         env_file:
             - .env
         depends_on:

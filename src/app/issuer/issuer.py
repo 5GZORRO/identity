@@ -1,7 +1,9 @@
 from typing import Optional
 from fastapi import APIRouter, Response, status
+from fastapi.responses import JSONResponse
 import requests, json, os
 
+from loguru import logger
 from bson import ObjectId
 
 from app.db import mongo_setup_admin
@@ -27,24 +29,25 @@ async def request_credential_issue(request_id: str, response: Response, body: Re
     # SETUP ISSUER CONNECTION
     try:
         body_dict = body.dict()
-
         setup_issuer.issuer_connection(body_dict["agent_service_endpoint"])
-        print(setup_issuer.connection_id)
-    except:
-        return "Unable to establish Issuer Connection"
+
+    except Exception as error:
+        logger.error(error)
+        return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content="Unable to establish Issuer Connection")
 
     # SETUP VC SCHEMA
     try:
         setup_vc_schema.vc_setup()
-        print(setup_vc_schema.cred_def_id)
-    except:
-        return "Unable to setup Verifiable Credential Schema"
+
+    except Exception as error:
+        logger.error(error)
+        return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content="Unable to setup Verifiable Credential Schema")
 
     # CHECK FOR REQUEST RECORD
     test = mongo_setup_admin.collection.find_one({"holder_request_id": request_id})
     if test != None:
         if test["state"] == "Credential Issued":
-            return "Credential Request was already issued"
+            return JSONResponse(status_code=status.HTTP_409_CONFLICT, content="Credential Request was already issued")
 
     # SUBMIT REQUEST TO ADMIN HANDLER
     try:
@@ -82,8 +85,10 @@ async def request_credential_issue(request_id: str, response: Response, body: Re
 
         return res_to_admin_handler
     
-    except:
-        return "Unable to connect to Admin Handler"
+    except Exception as error:
+        logger.error(error)
+        return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content="Unable to connect to Admin Handler")
+
 
 @router.post("/issue_requested_credential/{request_id}", status_code=201)
 async def issue_requested_credential(request_id: str, response: Response, body: IssueCred): #token: str,
@@ -95,8 +100,9 @@ async def issue_requested_credential(request_id: str, response: Response, body: 
     try:
         test = mongo_setup_admin.collection.find_one({"_id": ObjectId(request_id)})
         #print(test)
-    except:
-        return "Credential Request doesn't exist in Database"
+    except Exception as error:
+        logger.error(error)
+        return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content="Credential Request doesn't exist in Database")
 
     # ISSUE CREDENTIAL
     try:
@@ -147,8 +153,9 @@ async def issue_requested_credential(request_id: str, response: Response, body: 
                     "state": "credential_acked"
                 }
             
-            except:        
-                return "Unable to subscribe to response"
+            except Exception as error:
+                logger.error(error)
+                return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content="Unable to update and subscribe to response")
 
             # NOTIFY HOLDER AGENT
             #try:
@@ -161,10 +168,12 @@ async def issue_requested_credential(request_id: str, response: Response, body: 
             return resp_cred
 
         else:
-            return "Unable to subscribe to Credential response"
+            return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content="Unable to subscribe to Credential response")
     
-    except:
-        return "Unable to connect to Issuer Agent"
+    except Exception as error:
+        logger.error(error)
+        return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content="Unable to connect to Issuer Agent")
+
 
 @router.get("/read_issued_did")
 async def read_issued_did(response: Response, did_identifier: str): #token: str,
@@ -180,12 +189,14 @@ async def read_issued_did(response: Response, did_identifier: str): #token: str,
         
         subscriber = mongo_setup_admin.collection.find_one({"credentialSubject.id": did_identifier, "state": "Credential Issued", "revoked" : {"$exists" : False}}, {"_id": 0, "holder_request_id":0, "state": 0, "service_endpoint": 0})
         if subscriber == None:
-            return "Marketplace Credential revoked or not issued"
+            return JSONResponse(status_code=status.HTTP_409_CONFLICT, content="Marketplace Credential revoked or not issued")
         else: 
             return subscriber
 
-    except:
-        return "Unable to fetch specific issued Marketplace Credential"
+    except Exception as error:
+        logger.error(error)
+        return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content="Unable to fetch specific issued Marketplace Credential")
+
 
 @router.get("/read_issued_did/all")
 async def read_all_issued_did(response: Response): #, token: str
@@ -207,8 +218,10 @@ async def read_all_issued_did(response: Response): #, token: str
 
         return result_list
 
-    except:
-        return "Unable to fetch issued Marketplace Credentials"
+    except Exception as error:
+        logger.error(error)
+        return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content="Unable to fetch issued Marketplace Credentials")
+
 
 @router.put("/revoke_did")
 async def revoke_credential(response: Response, body: RevokeCred):
@@ -218,17 +231,20 @@ async def revoke_credential(response: Response, body: RevokeCred):
         subscriber = mongo_setup_admin.collection.find_one({"credential_exchange_id": body_dict["cred_exchange_id"]}, {"_id":0})
         #return subscriber
         if subscriber == None:
-            return "Credential doesn't exist in Database or hasn't been issued yet."
-    except:
-        return "Unable to find Credential."
+            return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content="Credential doesn't exist in Database or hasn't been issued yet")
+
+    except Exception as error:
+        logger.error(error)
+        return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content="Unable to find Credential to revoke")
 
     # CHECK IF CRED IS ALREADY REVOKED
     try:
         if "revoked" in subscriber:
-            response.status_code = status.HTTP_409_CONFLICT
-            return "Credential already revoked."
-    except:
-        return "Unable to check if Credential is revoked."   
+            return JSONResponse(status_code=status.HTTP_409_CONFLICT, content="Credential already revoked")
+
+    except Exception as error:
+        logger.error(error)
+        return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content="Unable to check if Credential is revoked")
 
     # REVOKE CREDENTIAL
     try:
@@ -241,8 +257,9 @@ async def revoke_credential(response: Response, body: RevokeCred):
         final_resp = requests.post(URL+"/revocation/revoke", data=json.dumps(revoke_cred), headers=header, timeout=60)
         #revoke_info = json.loads(final_resp.text)
         #return revoke_info
-    except:
-        return "Unable to revoke Credential."
+    except Exception as error:
+        logger.error(error)
+        return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content="Unable to revoke Credential")
 
     # UPDATE CRED INFO
     try:
@@ -251,8 +268,10 @@ async def revoke_credential(response: Response, body: RevokeCred):
             "credential_exchange_id": subscriber["credential_exchange_id"],
             "revoked": True
         }
-    except:        
-        return "Unable to subscribe to response."
+
+    except Exception as error:
+        logger.error(error)
+        return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content="Unable to update and subscribe to response")
 
     # NOTIFY HOLDER AGENT
     holder_url = subscriber["service_endpoint"]
@@ -260,6 +279,7 @@ async def revoke_credential(response: Response, body: RevokeCred):
     requests.post(holder_url+"/holder/update_revoked_state/"+str(subscriber["credential_exchange_id"]), json=resp_revoke, timeout=60)
     
     return resp_revoke
+
 
 @router.get("/read_did/revoked")
 async def read_revoked_credential():
@@ -272,8 +292,9 @@ async def read_revoked_credential():
 
         return result_list
 
-    except:
-        return "Unable to fetch specific Marketplace Credential"
+    except Exception as error:
+        logger.error(error)
+        return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content="Unable to fetch revoked Marketplace Credentials")
 
 
 ####################### Stakeholder Registration Management #######################
@@ -282,25 +303,25 @@ async def request_stakeholder_issue(request_id: str, response: Response, body: R
     # SETUP ISSUER CONNECTION
     try:
         body_dict = body.dict()
-
         setup_issuer.issuer_connection(body_dict["agent_service_endpoint"])
-        #setup_issuer.issuer_connection()
-        print(setup_issuer.connection_id)
-    except:
-        return "Unable to establish Issuer Connection"
+
+    except Exception as error:
+        logger.error(error)
+        return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content="Unable to establish Issuer Connection")
 
     # SETUP AUTH SCHEMA
     try:
         setup_stake_schema.stakeholder_cred_setup()
-        print(setup_stake_schema.cred_def_id)
-    except:
-        return "Unable to setup Stakeholder Schema"
+
+    except Exception as error:
+        logger.error(error)
+        return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content="Unable to setup Stakeholder Schema")
     
     # CHECK FOR REQUEST RECORD
     test = mongo_setup_admin.stakeholder_col.find_one({"holder_request_id": request_id})
     if test != None:
         if test["state"] == "Stakeholder Registered":
-            return "Stakeholder Request was already issued"
+            return JSONResponse(status_code=status.HTTP_409_CONFLICT, content="Stakeholder Request was already issued")
 
     # SUBMIT REQUEST TO ADMIN HANDLER
     try:
@@ -356,7 +377,6 @@ async def request_stakeholder_issue(request_id: str, response: Response, body: R
             "timestamp": body_dict["timestamp"],
             "service_endpoint": body_dict["service_endpoint"]
         }
-        #print(res_to_admin_handler)
         
         admin_handler_url = os.environ["HANDLER_ADMIN_URL"]        
         requests.post(admin_handler_url+"/stakeholder/receive", headers=header, json=res_to_admin_handler, timeout=60)
@@ -364,8 +384,10 @@ async def request_stakeholder_issue(request_id: str, response: Response, body: R
 
         return res_to_admin_handler
     
-    except:
-        return "Unable to connect to Admin Handler"
+    except Exception as error:
+        logger.error(error)
+        return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content="Unable to connect to Admin Handler")
+
 
 @router.post("/issue_stakeholder/{request_id}", status_code=201)
 async def issue_stakeholder(request_id: str, response: Response, body: IssueStakeCred):
@@ -373,8 +395,9 @@ async def issue_stakeholder(request_id: str, response: Response, body: IssueStak
     try:
         test = mongo_setup_admin.stakeholder_col.find_one({"_id": ObjectId(request_id)})
         #print(test)
-    except:
-        return "Stakeholder Request doesn't exist in Database"
+    except Exception as error:
+        logger.error(error)
+        return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content="Stakeholder Request doesn't exist in Database")
 
     # ISSUE CREDENTIAL
     try:
@@ -406,9 +429,6 @@ async def issue_stakeholder(request_id: str, response: Response, body: IssueStak
         cred_info = json.loads(final_resp.text)
         id_token = cred_info["credential_exchange_id"]
 
-        #print(cred_info)
-        #print(id_token)
-
         if cred_info["state"] == "offer_sent":
             # SUBSCRIBE TO AGENT RESPONSE
             try:
@@ -427,8 +447,9 @@ async def issue_stakeholder(request_id: str, response: Response, body: IssueStak
                     "state": "credential_acked"
                 }
             
-            except:        
-                return "Unable to subscribe to response"
+            except Exception as error:
+                logger.error(error)
+                return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content="Unable to update and subscribe to response")
 
             # NOTIFY HOLDER AGENT
             #try:
@@ -441,7 +462,8 @@ async def issue_stakeholder(request_id: str, response: Response, body: IssueStak
             return resp_cred
 
         else:
-            return "Unable to subscribe to Credential response"
+            return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content="Unable to subscribe to Stakeholder Credential response")
     
-    except:
-        return "Unable to connect to Issuer Agent"
+    except Exception as error:
+        logger.error(error)
+        return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content="Unable to connect to Issuer Agent")

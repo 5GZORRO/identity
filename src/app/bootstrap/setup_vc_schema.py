@@ -1,8 +1,5 @@
 import requests, json, time, sys, os
-
-def general_message(status, message, code):
-    response = {"status": status, "message": message, "code": code}
-    return json.dumps(response, indent = 4)
+from loguru import logger
 
 header = {
     'Content-Type': 'application/json'        
@@ -10,13 +7,8 @@ header = {
 
 #time.sleep(5)
 def vc_setup():
-  print("\n")
-  print("#############################################################")
-  print("############ VERIFIABLE CREDENTIAL SCHEMA SETUP #############")
-  print("#############################################################")
-
+  # POST VC Schema
   try:
-      # POST VC Schema
       schema = {
         "attributes": [
           "type",
@@ -33,12 +25,16 @@ def vc_setup():
       
       schema = json.loads(resp.text)
       schema_id_value = schema["schema_id"]
-      #print(schema_id_value)
-      
-      # POST Credential Definition
+
+  except Exception as error:
+      logger.error(error)
+
+  # POST Credential Definition
+  try:
       cred_definition = {
-        "revocation_registry_size": 32000,
-        "support_revocation": True,
+        #"revocation_registry_size": 32000,
+        #"support_revocation": True,
+        "support_revocation": False,
         "tag": "verifiable_cred_with_revoke",
         "schema_id": schema_id_value
       }
@@ -48,11 +44,7 @@ def vc_setup():
       cred_def = json.loads(cred_def_resp.text)
       global cred_def_id
       cred_def_id = cred_def["credential_definition_id"]
-      print("VERIFIABLE CREDENTIAL ID: " + str(cred_def_id))
+      logger.info("DID Credential Definition id: " + str(cred_def_id))
 
-  except:
-      print(general_message("error", "Unable to create Verifiable Credential schema.", 400))
-      sys.exit()
-
-  print("########### VERIFIABLE CREDENTIAL SCHEMA SETUP - END ###########")
-  print("\n")
+  except Exception as error:
+      logger.error(error)

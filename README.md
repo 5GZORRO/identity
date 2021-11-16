@@ -14,7 +14,6 @@ Repository of 5G ZORRO Identity and Permissions Manager components source code.
   * Git 
   * Docker
   * Docker-compose
-  * Mongo (optional)
   * Python
 
 ## Pre-Requisites 
@@ -64,12 +63,6 @@ sudo chmod +x /usr/local/bin/docker-compose
 docker-compose --version
 ```
 Docker compose’s version should be shown.
-
-### Install MongoBD (optional)
-
-This section is aimed for the user that wants to run his own local MongoDB instance.
-
-Reference: https://www.digitalocean.com/community/tutorials/how-to-install-mongodb-on-ubuntu-18-04-source
 
 ### Install Python
 
@@ -124,7 +117,6 @@ Finally, run the Verifier Agent by using the command provided in https://github.
 * **Requirements**: 
   * Von-network running
   * Agents running
-  * Mongo active
 
 Before running this project, you must create an .env file & an .env_admin file, based on the .env.template & .env_admin.template files available in identity/src, respectively. Further detailing can be found in said file.
 
@@ -137,3 +129,5 @@ To stop the project, simply type:
 docker-compose down
 ```
 The Administrator and Trading Provider Controllers should now be available. To access Trading Provider, simply type http://localhost:6800/ on your preferred browser.
+
+To retrieve the private holder agent key to perform a Stakeholder Credential issuance request, you can do so through **/src/app/logs/file_holder_agent.log**
