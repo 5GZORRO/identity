@@ -11,7 +11,7 @@ from app.bootstrap.key import holder_key
 from app.holder import utils
 
 # classes
-from app.holder.classes import Stakeholder
+from app.holder.classes import Stakeholder, State
 
 router = APIRouter(
     prefix="/holder",
@@ -76,7 +76,7 @@ async def register_stakeholder(response: Response, body: Stakeholder): #key: str
                 #"verkey": verkey
             },
             "timestamp": epoch_ts,
-            "state": "Stakeholder Registration Requested",
+            "state": State.stakeholder_request,
             "handler_url": body_dict["handler_url"]
         }
         client_res = copy.deepcopy(res_to_mongo)
@@ -134,7 +134,7 @@ async def register_stakeholder(response: Response, body: Stakeholder): #key: str
 async def update_stakeholder_state(request_id: str, body: dict, response: Response):
     #UPDATE MONGO RECORD
     try:
-        mongo_setup_provider.stakeholder_col.find_one_and_update({'_id': ObjectId(request_id)}, {'$set': {"state": "Stakeholder Registered", "credential_definition_id": body["credential_definition_id"], "id_token": body["id_token"]}}) # UPDATE REQUEST RECORD FROM MONGO
+        mongo_setup_provider.stakeholder_col.find_one_and_update({'_id': ObjectId(request_id)}, {'$set': {"state": State.stakeholder_issue, "credential_definition_id": body["credential_definition_id"], "id_token": body["id_token"]}}) # UPDATE REQUEST RECORD FROM MONGO
         subscriber = mongo_setup_provider.stakeholder_col.find_one({"_id": ObjectId(request_id)})
 
     except Exception as error:
@@ -143,6 +143,21 @@ async def update_stakeholder_state(request_id: str, body: dict, response: Respon
     
     # SEND REQUEST RECORD TO HOLDER HANDLER
     thread = threading.Thread(target = utils.send_to_holder, args=(subscriber["handler_url"],body,), daemon=True)
+    thread.start()
+
+@router.post("/decline_stakeholder/{request_id}", include_in_schema=False)
+async def decline_stakeholder(request_id: str, response: Response):
+    #UPDATE MONGO RECORD
+    try:
+        mongo_setup_provider.stakeholder_col.find_one_and_update({'_id': ObjectId(request_id)}, {'$set': {"state": State.stakeholder_decline}}) # UPDATE REQUEST RECORD FROM MONGO
+        subscriber = mongo_setup_provider.stakeholder_col.find_one({"_id": ObjectId(request_id)}, {"_id": 0})
+
+    except Exception as error:
+        logger.error(error)
+        return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content="Unable to update Mongo record")
+    
+    # SEND REQUEST RECORD TO HOLDER HANDLER
+    thread = threading.Thread(target = utils.send_to_holder, args=(subscriber["handler_url"],subscriber,), daemon=True)
     thread.start()
    
 
@@ -180,7 +195,6 @@ async def read_specific_stakeholder(response: Response, stakeholder_did: str):
     try:
         subscriber = mongo_setup_provider.stakeholder_col.find_one({"stakeholderClaim.stakeholderDID": stakeholder_did, "revoked" : { "$exists" : False}}, {"_id": 0})
         if subscriber == None:
-            logger.error("Active Stakeholder Credential non existent or not found")
             return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content="Active Stakeholder Credential non existent or not found")
         else: 
             return subscriber

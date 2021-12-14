@@ -2,6 +2,16 @@ from typing import Optional, List
 from pydantic import BaseModel
 from enum import Enum
 
+### State -> Enums ###
+class State(str, Enum):
+    stakeholder_request = 'Stakeholder Registration Requested'
+    stakeholder_issue = 'Stakeholder Registered'
+    stakeholder_decline = 'Stakeholder Declined'
+    did_offer_request = 'Credential Requested'
+    did_offer_issue = 'Credential Issued'
+    did_offer_decline = 'Credential Declined'
+    
+
 ### Role -> Enums ###
 class Type(str, Enum):
     product_offer = 'ProductOffer'

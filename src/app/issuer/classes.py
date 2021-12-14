@@ -1,5 +1,16 @@
 from typing import Optional
 from pydantic import BaseModel
+from enum import Enum
+
+### State -> Enums ###
+class State(str, Enum):
+    stakeholder_request = 'Stakeholder Registration Requested'
+    stakeholder_issue = 'Stakeholder Registered'
+    stakeholder_decline = 'Stakeholder Declined'
+    did_offer_request = 'Credential Requested'
+    did_offer_issue = 'Credential Issued'
+    did_offer_decline = 'Credential Declined'
+
 
 ##### Credential Issuing Classes #####
 class ReqCred(BaseModel):
@@ -21,6 +32,10 @@ class IssueCred(BaseModel):
 class RevokeCred(BaseModel):
     cred_exchange_id: str
 
+class ResolveOffer(BaseModel):
+    id: str
+    approval: bool
+
 
 ##### Stakeholder Registry Classes #####
 class ReqStakeCred(BaseModel):
@@ -34,3 +49,7 @@ class IssueStakeCred(BaseModel):
     stakeholderClaim: dict
     timestamp: str
     service_endpoint: str
+
+class ResolveStake(BaseModel):
+    stakeholder_did: str
+    approval: bool

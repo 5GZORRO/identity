@@ -9,9 +9,10 @@ def public_key_create():
         holder_url = os.environ["HOLDER_AGENT_URL"]
         resp = requests.post(holder_url+"/wallet/did/create", timeout=30)
         result = resp.json()
-        #did = result["result"]["did"]
-        global public_verkey
+        global public_did, public_verkey
+        public_did = result["result"]["did"]
         public_verkey = result["result"]["verkey"]
+        logger.info("Public DID: " + str(public_did))
         logger.info("Public Verification Key: " + str(public_verkey))
 
     except Exception as error:

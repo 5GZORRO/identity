@@ -17,4 +17,3 @@ def send_to_holder(url: str, client_response: dict):
 
     except Exception as error:
         logger.error(error)
-        return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content="Unable to send info to Holder's Handler")

@@ -1,7 +1,8 @@
-FROM python:3.8.3-slim-buster
+# pull official base image
+FROM python:3.9.6-slim-buster
 
 # set working directory
-WORKDIR /usr/src/app
+WORKDIR /usr/src
 
 # set environment variables
 ENV PYTHONDONTWRITEBYTECODE 1
@@ -13,9 +14,8 @@ RUN apt-get update \
   && apt-get clean
 
 # install python dependencies
-RUN pip install --upgrade pip
 COPY ./requirements.txt .
-RUN pip install -r requirements.txt
+RUN pip install --no-cache-dir --upgrade -r requirements.txt
 
-# add app
-COPY . .
+# copy the ./app local directory inside the ./app working directory
+COPY ./app ./app

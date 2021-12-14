@@ -10,7 +10,7 @@ from app.db import mongo_setup_provider
 from app.holder import utils
 
 # classes
-from app.holder.classes import Offer, ReadOfferDID
+from app.holder.classes import Offer, ReadOfferDID, State
 
 router = APIRouter(
     prefix="/holder",
@@ -56,7 +56,7 @@ async def request_credential(response: Response, body: Offer):
                 "claims": body_dict["claims"]
             },
             "timestamp": epoch_ts,
-            "state": "Credential Requested",
+            "state": State.did_offer_request,
             "handler_url": body_dict["handler_url"]
         }
         client_res = copy.deepcopy(res_to_mongo)
@@ -96,12 +96,27 @@ async def request_credential(response: Response, body: Offer):
         return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content="Unable to perform Credential issuing request")
 
 
+@router.post("/decline_offer_did/{request_id}", include_in_schema=False)
+async def decline_offer_did(request_id: str, response: Response):
+    #UPDATE MONGO RECORD
+    try:
+        mongo_setup_provider.collection.find_one_and_update({'_id': ObjectId(request_id)}, {'$set': {"state": State.did_offer_decline}}) # UPDATE REQUEST RECORD FROM MONGO
+        subscriber = mongo_setup_provider.collection.find_one({"_id": ObjectId(request_id)}, {"_id": 0})
+
+    except Exception as error:
+        logger.error(error)
+        return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content="Unable to update Mongo record")
+    
+    # SEND REQUEST RECORD TO HOLDER HANDLER
+    thread = threading.Thread(target = utils.send_to_holder, args=(subscriber["handler_url"],subscriber,), daemon=True)
+    thread.start()
+
 @router.post("/update_did_state/{request_id}", include_in_schema=False)
 async def update_did_state(request_id: str, body: dict, response: Response):
     #UPDATE MONGO RECORD
     try:
         #print(body)
-        mongo_setup_provider.collection.find_one_and_update({'_id': ObjectId(request_id)}, {'$set': {"state": "Credential Issued", "credential_definition_id": body["credential_definition_id"], "credential_exchange_id": body["credential_exchange_id"]}}) # UPDATE REQUEST RECORD FROM MONGO
+        mongo_setup_provider.collection.find_one_and_update({'_id': ObjectId(request_id)}, {'$set': {"state": State.did_offer_issue, "credential_definition_id": body["credential_definition_id"], "credential_exchange_id": body["credential_exchange_id"]}}) # UPDATE REQUEST RECORD FROM MONGO
         subscriber = mongo_setup_provider.collection.find_one({"_id": ObjectId(request_id)})
         #print(subscriber["handler_url"])
 
@@ -177,7 +192,7 @@ async def read_specific_credential(response: Response, did_identifier: str): #, 
     #    return "Invalid ID Token"
 
     try:
-        subscriber = mongo_setup_provider.collection.find_one({"credentialSubject.id": did_identifier, "state": "Credential Issued", "revoked" : {"$exists" : False}}, {"_id": 0, "state": 0, "handler_url": 0, "credential_exchange_id": 0})
+        subscriber = mongo_setup_provider.collection.find_one({"credentialSubject.id": did_identifier, "state": State.did_offer_issue, "revoked" : {"$exists" : False}}, {"_id": 0, "state": 0, "handler_url": 0, "credential_exchange_id": 0})
         if subscriber == None:
             return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content="Marketplace Credential not issued or non existent")
         else: 
@@ -204,7 +219,7 @@ async def read_all_credentials(response: Response): #, token: str, handler_url: 
     #    return "Invalid ID Token"
     
     try:
-        subscriber = mongo_setup_provider.collection.find({"state": "Credential Issued", "revoked" : { "$exists" : False}}, {"_id": 0, "state": 0, "handler_url": 0, "credential_exchange_id": 0})
+        subscriber = mongo_setup_provider.collection.find({"state": State.did_offer_issue, "revoked" : { "$exists" : False}}, {"_id": 0, "state": 0, "handler_url": 0, "credential_exchange_id": 0})
         result_list = []
 
         for result_object in subscriber:

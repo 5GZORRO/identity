@@ -24,7 +24,7 @@ from app.bootstrap import setup_vc_schema, setup_stake_schema
 
 from app.authentication import send_proof, verify_credential, get_public_key
 from app.holder import holder_stakeholder, holder_did
-from app.issuer import issuer
+from app.issuer import issuer_stakeholder, issuer_did
 #from app.verifier import verifier
 
 with open('app/openapi/openapi_admin.json') as json_file:
@@ -60,7 +60,8 @@ app.add_middleware(
 #app.include_router(did.router)
 app.include_router(holder_stakeholder.router)
 app.include_router(holder_did.router)
-app.include_router(issuer.router)
+app.include_router(issuer_stakeholder.router)
+app.include_router(issuer_did.router)
 app.include_router(get_public_key.router)
 app.include_router(send_proof.router)
 app.include_router(verify_credential.router)

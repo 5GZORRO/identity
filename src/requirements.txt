@@ -5,4 +5,5 @@ requests
 pymongo
 timeloop
 pyjwt
+pynacl
 loguru
