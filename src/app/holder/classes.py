@@ -41,7 +41,7 @@ class Type(str, Enum):
 class Offer(BaseModel):
     token: str
     type: Type
-    assets: List[Assets] = Field(..., min_items=1)
+    #assets: List[Assets] = Field(..., min_items=1)
     #claims: dict
     claims: list = []
     handler_url: str
