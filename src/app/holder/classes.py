@@ -1,5 +1,5 @@
 from typing import Optional, List
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from enum import Enum
 
 ### State -> Enums ###
@@ -11,6 +11,22 @@ class State(str, Enum):
     did_offer_issue = 'Credential Issued'
     did_offer_decline = 'Credential Declined'
     
+
+### Role -> Enums ###
+class Role(str, Enum):
+    Trader = 'Trader'
+    Regulator = 'Regulator'
+    Administrator = 'Administrator'
+
+### Assets -> Enums ###
+class Assets(str, Enum):
+    Edge = 'Edge'
+    Cloud = 'Cloud'
+    Spectrum = 'Spectrum'
+    RadioAccessNetwork = 'RadioAccessNetwork'
+    VirtualNetworkFunction = 'VirtualNetworkFunction'
+    NetworkSlice = 'NetworkSlice'
+    NetworkService = 'NetworkService'
 
 ### Role -> Enums ###
 class Type(str, Enum):
@@ -25,26 +41,11 @@ class Type(str, Enum):
 class Offer(BaseModel):
     token: str
     type: Type
+    assets: List[Assets] = Field(..., min_items=1)
     #claims: dict
     claims: list = []
     handler_url: str
 
-
-### Role -> Enums ###
-class Role(str, Enum):
-    Regulator = 'Regulator'
-    Resource_Provider = 'ResourceProvider'
-    Resource_Consumer = 'ResourceConsumer'
-    Service_Provider = 'ServiceProvider'
-    Service_Consumer = 'ServiceConsumer'
-    Administrator = 'Administrator'
-
-### Assets -> Enums ###
-class Assets(str, Enum):
-    InformationResource = 'InformationResource'
-    SpectrumResource = 'SpectrumResource'
-    PhysicalResource = 'PhysicalResource'
-    NetworkFunction = 'NetworkFunction'
 
 ### notificationType -> Enum ###
 class NType(str, Enum):
@@ -57,7 +58,7 @@ class SHNotify(BaseModel):
 class SHRoles(BaseModel):
     #role: str
     role: Role
-    assets: List[Assets]
+    assets: List[Assets] = Field(..., min_items=1)
     #assets: str
 
 #class SHServices(BaseModel):
@@ -75,7 +76,7 @@ class Stakeholder(BaseModel):
     governanceBoardDID: str
     stakeholderServices: List = []
     #stakeholderServices: List[SHServices]
-    stakeholderRoles: List[SHRoles]
+    stakeholderRoles: List[SHRoles] = Field(..., min_items=1)
     #stakeholderRoles: SHRoles
     stakeholderProfile: SHProfile
     handler_url: str

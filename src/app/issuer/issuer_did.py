@@ -160,6 +160,7 @@ async def request_credential_issue(request_id: str, response: Response, body: Re
             "type": body_dict["type"],
             "credentialSubject": {
                 "id": body_dict["credentialSubject"]["id"],
+                #"assets": body_dict["credentialSubject"]["assets"],
                 "claims": body_dict["credentialSubject"]["claims"]
             },
             "timestamp": body_dict["timestamp"],

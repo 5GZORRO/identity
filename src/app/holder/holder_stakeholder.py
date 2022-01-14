@@ -7,7 +7,7 @@ from bson import ObjectId
 
 #from app.authentication import authentication
 from app.db import mongo_setup_provider
-from app.bootstrap.key import holder_key
+#from app.bootstrap.key import holder_key
 from app.holder import utils
 
 # classes
@@ -23,7 +23,7 @@ async def register_stakeholder(response: Response, body: Stakeholder): #key: str
     # AUTH
     try:
         body_dict = body.dict()
-        if body_dict["key"] != holder_key.verkey:
+        if body_dict["key"] != os.environ["KEY"]: #holder_key.verkey
             return JSONResponse(status_code=status.HTTP_401_UNAUTHORIZED, content="Invalid Verification Key")
 
     except Exception as error:

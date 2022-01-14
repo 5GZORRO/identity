@@ -26,6 +26,17 @@ async def request_credential(response: Response, body: Offer):
         if subscriber is not None:
             if body_dict["token"] != subscriber["id_token"]:            
                 return JSONResponse(status_code=status.HTTP_401_UNAUTHORIZED, content="Invalid ID Token")
+            
+            # Compare proposed offer assets with stakeholder approved assets
+            #if len(list(set(body_dict["assets"]) ^ set(subscriber["stakeholderClaim"]["stakeholderRoles"][0]["assets"]))) > 0:
+            #    return JSONResponse(status_code=status.HTTP_401_UNAUTHORIZED, content="ID Token of Stakeholder unauthorized to request offer for specified assets")
+            #set_with_all_assets = set()
+            #for object_with_assets in subscriber["stakeholderClaim"]["stakeholderRoles"]:
+            #    set_with_assets_from_object = set(body_dict["assets"]).intersection(object_with_assets["assets"])
+            #    set_with_all_assets.update(set_with_assets_from_object)
+            
+            #if len(list(set(body_dict["assets"]) ^ set_with_all_assets)) > 0:
+            #    return JSONResponse(status_code=status.HTTP_401_UNAUTHORIZED, content="ID Token of Stakeholder unauthorized to request offer for specified assets")
         else:
             return JSONResponse(status_code=status.HTTP_401_UNAUTHORIZED, content="Invalid ID Token")
 
@@ -53,6 +64,7 @@ async def request_credential(response: Response, body: Offer):
             "type": body_dict["type"],
             "credentialSubject": {
                 "id": did,
+                #"assets": body_dict["assets"],
                 "claims": body_dict["claims"]
             },
             "timestamp": epoch_ts,
@@ -73,6 +85,7 @@ async def request_credential(response: Response, body: Offer):
             "type": body_dict["type"],
             "credentialSubject": {
                 "id": did,
+                #"assets": body_dict["assets"],
                 "claims": body_dict["claims"]
             },
             "timestamp": epoch_ts,

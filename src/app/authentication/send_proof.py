@@ -9,7 +9,7 @@ from bson import ObjectId
 from loguru import logger
 
 from app.db import mongo_setup_provider
-from app.bootstrap.key import holder_key
+#from app.bootstrap.key import holder_key
 
 router = APIRouter(
     prefix="/authentication",

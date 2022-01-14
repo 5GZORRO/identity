@@ -12,7 +12,7 @@ logger.remove()
 logger.add("./app/logs/file_admin_agent.log", format="{time:YYYY-MM-DD at HH:mm:ss} | {level}: {message} | {function} in line {line} on {file}", rotation="5 MB")
 
 #Verification Key
-from app.bootstrap.key import holder_key, public_key #,issuer_key
+from app.bootstrap.key import key_pair # holder_key, issuer_key
 #Database Setup
 from app.db import mongo_setup_provider # For Holder Operations
 from app.db import mongo_setup_admin
@@ -22,7 +22,7 @@ from app.bootstrap import setup_issuer #, setup_verifier
 from app.bootstrap import setup_vc_schema, setup_stake_schema
 
 
-from app.authentication import send_proof, verify_credential, get_public_key
+from app.authentication import send_proof, verify_credential, get_key_pair
 from app.holder import holder_stakeholder, holder_did
 from app.issuer import issuer_stakeholder, issuer_did
 #from app.verifier import verifier
@@ -45,6 +45,7 @@ origins = [
     "http://172.28.3.126:30008",
     "http://172.28.3.126:30009",
     "http://172.28.3.126:30010",
+    "http://172.28.3.126:30011",
     "https://5gzorro.netlify.app",
 ]
 
@@ -62,11 +63,11 @@ app.include_router(holder_stakeholder.router)
 app.include_router(holder_did.router)
 app.include_router(issuer_stakeholder.router)
 app.include_router(issuer_did.router)
-app.include_router(get_public_key.router)
+app.include_router(get_key_pair.router)
 app.include_router(send_proof.router)
 app.include_router(verify_credential.router)
 #app.include_router(verifier.router)
 
-holder_key.holder_key_create()
-public_key.public_key_create()
+#holder_key.holder_key_create()
+key_pair.operator_key_pair_create()
 #issuer_key.issuer_key_create()

@@ -7,7 +7,7 @@ from enum import Enum
 
 from loguru import logger
 
-from app.bootstrap.key import public_key
+from app.bootstrap.key import key_pair
 from app.config import log_config
 
 router = APIRouter(
@@ -15,15 +15,19 @@ router = APIRouter(
     tags=["authentication"]
 )
 
-@router.get("/public_key", status_code=200)
-async def get_public_key(response: Response, public_did: str):
+@router.get("/operator_key_pair", status_code=200)
+async def get_key_pair(response: Response, shared_secret: str):
     # Fetch bootstrap public key
     try:
-        # Check public DID
-        if public_did != public_key.public_did:
-            return JSONResponse(status_code=status.HTTP_401_UNAUTHORIZED, content="Invalid public agent DID")
+        # Check shared component secret
+        if shared_secret != os.environ["KEY"]:
+            return JSONResponse(status_code=status.HTTP_401_UNAUTHORIZED, content="Invalid component secret")
         else:
-            return public_key.public_verkey
+            key_pair_res = {
+                "public_key": key_pair.pub_key,
+                "private_key": key_pair.priv_key
+            }
+            return key_pair_res
     
     except Exception as error:
         logger.error(error)

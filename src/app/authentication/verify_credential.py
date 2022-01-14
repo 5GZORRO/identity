@@ -10,7 +10,7 @@ from loguru import logger
 
 from app.db import mongo_setup_admin
 from app.bootstrap import setup_issuer
-from app.bootstrap.key import holder_key
+#from app.bootstrap.key import holder_key
 
 router = APIRouter(
     prefix="/authentication",
