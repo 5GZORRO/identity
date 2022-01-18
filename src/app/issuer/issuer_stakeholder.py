@@ -175,8 +175,8 @@ async def request_stakeholder_issue(request_id: str, response: Response, body: R
             },
             "timestamp": body_dict["timestamp"],
             "state": State.stakeholder_request,
-            #"handler_url": body_dict["handler_url"]
             "service_endpoint": body_dict["service_endpoint"],
+            "handler_url": body_dict["handler_url"],
             "connection_id": setup_issuer.connection_id,
             "credential_definition_id": setup_stake_schema.cred_def_id
         }

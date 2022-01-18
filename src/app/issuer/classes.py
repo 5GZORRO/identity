@@ -43,6 +43,7 @@ class ReqStakeCred(BaseModel):
     timestamp: str
     service_endpoint: str
     agent_service_endpoint: str
+    handler_url: str
 
 class IssueStakeCred(BaseModel):
     holder_request_id: str
