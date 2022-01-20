@@ -1,7 +1,7 @@
 from typing import Optional
 from fastapi import APIRouter, Response, status
 from fastapi.responses import JSONResponse
-import requests, json, os
+import requests, json, os, threading
 
 from loguru import logger
 from bson import ObjectId
@@ -130,6 +130,15 @@ async def resolve_pending_did_offer_approval(response: Response, body: ResolveOf
 
 @router.post("/request_credential_issue/{request_id}", status_code=201, include_in_schema=False)
 async def request_credential_issue(request_id: str, response: Response, body: ReqCred):
+    try:
+        worker = threading.Thread(target = process_holder_did_request, args=(request_id, body,), daemon=True)
+        worker.start()
+
+    except Exception as error:
+        logger.error(error)
+        return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content="Unable to process Holder Request")
+
+def process_holder_did_request(request_id: str, body: dict):
     # SETUP ISSUER CONNECTION
     try:
         body_dict = body.dict()
@@ -172,118 +181,10 @@ async def request_credential_issue(request_id: str, response: Response, body: Re
         }
 
         mongo_setup_admin.collection.insert_one(res_to_insert_db)
-        
-        '''
-        res_to_admin_handler = {
-            "_id": str(res_to_insert_db["_id"]),
-            "holder_request_id": request_id,
-            "type": body_dict["type"],
-            "credentialSubject": {
-                "id": body_dict["credentialSubject"]["id"],
-                "claims": body_dict["credentialSubject"]["claims"]
-            },
-            "timestamp": body_dict["timestamp"],
-            "service_endpoint": body_dict["service_endpoint"]
-        }
-        #print(res_to_admin_handler)
-        
-        admin_handler_url = os.environ["HANDLER_ADMIN_URL"]
-        requests.post(admin_handler_url+"/receive", headers=header, json=res_to_admin_handler, timeout=60)
-        #print(res.json())
-
-        return res_to_admin_handler
-        '''
     
     except Exception as error:
         logger.error(error)
         return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content="Unable to connect to Admin Handler")
-
-
-'''
-@router.post("/issue_requested_credential/{request_id}", status_code=201)
-async def issue_requested_credential(request_id: str, response: Response, body: IssueCred): #token: str,
-    #if token != authentication.id_token:
-    #    response.status_code = status.HTTP_401_UNAUTHORIZED
-    #    return "Invalid ID Token"
-
-    # CHECK FOR REQUEST RECORD
-    try:
-        test = mongo_setup_admin.collection.find_one({"_id": ObjectId(request_id)})
-        #print(test)
-    except Exception as error:
-        logger.error(error)
-        return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content="Credential Request doesn't exist in Database")
-
-    # ISSUE CREDENTIAL
-    try:
-        body_dict = body.dict()
-
-        URL = os.environ["ISSUER_AGENT_URL"]
-        
-        # Configure Credential to be published
-        issue_cred = {
-            "connection_id": setup_issuer.connection_id,
-            "cred_def_id": setup_vc_schema.cred_def_id,
-            "credential_proposal": {
-                "attributes": [
-                    {
-                        "name": "type",
-                        "value": body_dict["type"]
-                    },
-                    {
-                        "name": "credentialSubject",
-                        "value": str(body_dict["credentialSubject"])
-                    },
-                    {
-                        "name": "timestamp",
-                        "value": str(body_dict["timestamp"])
-                    }
-                ]
-            }
-        }
-
-        final_resp = requests.post(URL+"/issue-credential/send", data=json.dumps(issue_cred), headers=header, timeout=60)
-        #print(final_resp.text)
-        cred_info = json.loads(final_resp.text)
-
-        if cred_info["state"] == "offer_sent":
-            # SUBSCRIBE TO AGENT RESPONSE
-            try:
-                # UPDATE REQUEST RECORD FROM MONGO
-                mongo_setup_admin.collection.find_one_and_update({'_id': ObjectId(request_id)}, {'$set': {"state": "Credential Issued", "credential_definition_id": cred_info["credential_definition_id"], "credential_exchange_id": cred_info["credential_exchange_id"]}})
-                #mongo_setup.collection.remove({"_id": ObjectId(request_id)})
-
-                resp_cred = {
-                    "credential_exchange_id": cred_info["credential_exchange_id"],
-                    "credential_definition_id": cred_info["credential_definition_id"],
-                    "credential_offer_dict": cred_info["credential_offer_dict"],
-                    "created_at": cred_info["created_at"],
-                    "updated_at": cred_info["updated_at"],
-                    "schema_id": cred_info["schema_id"],
-                    "state": "credential_acked"
-                }
-            
-            except Exception as error:
-                logger.error(error)
-                return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content="Unable to update and subscribe to response")
-
-            # NOTIFY HOLDER AGENT
-            #try:
-            holder_url = body_dict["service_endpoint"]
-            #print(holder_url)
-            requests.post(holder_url+"/holder/update_did_state/"+str(body_dict["holder_request_id"]), json=resp_cred, timeout=60)
-            #except:
-            #    return "Unable to notify Holder"
-            
-            return resp_cred
-
-        else:
-            return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content="Unable to subscribe to Credential response")
-    
-    except Exception as error:
-        logger.error(error)
-        return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content="Unable to connect to Issuer Agent")
-'''
 
 
 @router.get("/read_issued_did")

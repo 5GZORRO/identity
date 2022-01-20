@@ -1,7 +1,7 @@
 from typing import Optional
 from fastapi import APIRouter, Response, status
 from fastapi.responses import JSONResponse
-import requests, json, os
+import requests, json, os, threading
 
 from loguru import logger
 from bson import ObjectId
@@ -128,6 +128,15 @@ async def resolve_pending_stakeholder_approval(response: Response, body: Resolve
 
 @router.post("/request_stakeholder_issue/{request_id}", status_code=201, include_in_schema=False)
 async def request_stakeholder_issue(request_id: str, response: Response, body: ReqStakeCred):
+    try:
+        worker = threading.Thread(target = process_holder_request, args=(request_id, body,), daemon=True)
+        worker.start()
+
+    except Exception as error:
+        logger.error(error)
+        return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content="Unable to process Holder Request")
+
+def process_holder_request(request_id: str, body: dict):
     # SETUP ISSUER CONNECTION
     try:
         body_dict = body.dict()
@@ -182,122 +191,7 @@ async def request_stakeholder_issue(request_id: str, response: Response, body: R
         }
 
         mongo_setup_admin.stakeholder_col.insert_one(res_to_insert_db)
-        
-        '''
-        res_to_admin_handler = {
-            "_id": str(res_to_insert_db["_id"]),
-            "holder_request_id": request_id,
-            "stakeholderClaim": {
-                "governanceBoardDID": body_dict["stakeholderClaim"]["governanceBoardDID"],
-                "stakeholderServices": body_dict["stakeholderClaim"]["stakeholderServices"],
-                #"stakeholderRoles": {
-                #    "role": body_dict["stakeholderClaim"]["stakeholderRoles"]["role"],
-                #    "assets": body_dict["stakeholderClaim"]["stakeholderRoles"]["assets"]
-                #},
-                "stakeholderRoles": body_dict["stakeholderClaim"]["stakeholderRoles"],
-                "stakeholderProfile": {
-                    "name": body_dict["stakeholderClaim"]["stakeholderProfile"]["name"],
-                    "ledgerIdentity": body_dict["stakeholderClaim"]["stakeholderProfile"]["ledgerIdentity"],
-                    "address": body_dict["stakeholderClaim"]["stakeholderProfile"]["address"],
-                    "notificationMethod": body_dict["stakeholderClaim"]["stakeholderProfile"]["notificationMethod"]
-                },
-                "stakeholderDID": body_dict["stakeholderClaim"]["stakeholderDID"]
-                #"did": body_dict["stakeholderClaim"]["did"],
-                #"verkey": body_dict["stakeholderClaim"]["verkey"]
-            },
-            "timestamp": body_dict["timestamp"],
-            "service_endpoint": body_dict["service_endpoint"]
-        }
-        
-        admin_handler_url = os.environ["HANDLER_ADMIN_URL"]        
-        requests.post(admin_handler_url+"/stakeholder/receive", headers=header, json=res_to_admin_handler, timeout=60)
-        #print(res.json())
-
-        return res_to_admin_handler
-        '''
     
     except Exception as error:
         logger.error(error)
-        return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content="Unable to connect to Admin Handler")
-
-
-'''
-@router.post("/issue_stakeholder/{request_id}", status_code=201)
-async def issue_stakeholder(request_id: str, response: Response, body: IssueStakeCred):
-    # CHECK FOR REQUEST RECORD
-    try:
-        test = mongo_setup_admin.stakeholder_col.find_one({"_id": ObjectId(request_id)})
-        #print(test)
-    except Exception as error:
-        logger.error(error)
-        return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content="Stakeholder Request doesn't exist in Database")
-
-    # ISSUE CREDENTIAL
-    try:
-        body_dict = body.dict()
-
-        URL = os.environ["ISSUER_AGENT_URL"]
-        
-        # Configure Stakeholder to be registered
-        issue_cred = {
-            "connection_id": setup_issuer.connection_id,
-            "cred_def_id": setup_stake_schema.cred_def_id,
-            "credential_proposal": {
-                "attributes": [
-                    {
-                        "name": "stakeholderClaim",
-                        "value": str(body_dict["stakeholderClaim"])
-                    },
-                    {
-                        "name": "timestamp",
-                        "value": str(body_dict["timestamp"])
-                    }
-                ]
-            }
-        }
-        #print(issue_cred)
-
-        final_resp = requests.post(URL+"/issue-credential/send", data=json.dumps(issue_cred), headers=header, timeout=60)
-        #print(final_resp.text)
-        cred_info = json.loads(final_resp.text)
-        id_token = cred_info["credential_exchange_id"]
-
-        if cred_info["state"] == "offer_sent":
-            # SUBSCRIBE TO AGENT RESPONSE
-            try:
-                # UPDATE REQUEST RECORD FROM MONGO
-                mongo_setup_admin.stakeholder_col.find_one_and_update({'_id': ObjectId(request_id)}, {'$set': {"state": "Stakeholder Registered", "credential_definition_id": cred_info["credential_definition_id"], "id_token": id_token}})
-                #mongo_setup.stakeholder_col.remove({"_id": ObjectId(request_id)})
-
-                resp_cred = {
-                    #"credential_exchange_id": cred_info["credential_exchange_id"],
-                    "id_token": id_token,
-                    "credential_definition_id": cred_info["credential_definition_id"],
-                    "credential_offer_dict": cred_info["credential_offer_dict"],
-                    "created_at": cred_info["created_at"],
-                    "updated_at": cred_info["updated_at"],
-                    "schema_id": cred_info["schema_id"],
-                    "state": "credential_acked"
-                }
-            
-            except Exception as error:
-                logger.error(error)
-                return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content="Unable to update and subscribe to response")
-
-            # NOTIFY HOLDER AGENT
-            #try:
-            holder_url = body_dict["service_endpoint"]
-            #print(holder_url)
-            requests.post(holder_url+"/holder/update_stakeholder_state/"+str(body_dict["holder_request_id"]), json=resp_cred, timeout=60)
-            #except:
-            #    return "Unable to notify Holder"
-            
-            return resp_cred
-
-        else:
-            return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content="Unable to subscribe to Stakeholder Credential response")
-    
-    except Exception as error:
-        logger.error(error)
-        return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content="Unable to connect to Issuer Agent")
-'''
+        return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content="Unable to connect to Admin Handler")  

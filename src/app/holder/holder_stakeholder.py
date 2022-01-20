@@ -118,11 +118,11 @@ async def register_stakeholder(response: Response, body: Stakeholder): #key: str
         
         URL = os.environ["ADMIN_AGENT_CONTROLLER_URL"]
         requests.post(URL+"/issuer/request_stakeholder_issue/"+str(res_to_mongo["_id"]), json=res_to_admin, timeout=60)
-       
+
 
         # SEND TO HOLDER HANDLER
-        thread = threading.Thread(target = utils.send_to_holder, args=(body_dict["handler_url"],client_res,), daemon=True)
-        thread.start()
+        worker = threading.Thread(target = utils.send_to_holder, args=(body_dict["handler_url"], client_res,), daemon=True)
+        worker.start()
 
         return client_res
         
