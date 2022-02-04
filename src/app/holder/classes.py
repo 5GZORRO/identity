@@ -1,5 +1,5 @@
 from typing import Optional, List
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, HttpUrl, Field
 from enum import Enum
 
 ### State -> Enums ###
@@ -10,13 +10,15 @@ class State(str, Enum):
     did_offer_request = 'Credential Requested'
     did_offer_issue = 'Credential Issued'
     did_offer_decline = 'Credential Declined'
-    
+    license_request = 'Stakeholder License Registration Requested'
+    license_issue = 'Stakeholder License Registered'
+    license_decline = 'Stakeholder License Declined'
+
 
 ### Role -> Enums ###
 class Role(str, Enum):
     Trader = 'Trader'
     Regulator = 'Regulator'
-    Administrator = 'Administrator'
 
 ### Assets -> Enums ###
 class Assets(str, Enum):
@@ -74,12 +76,11 @@ class SHProfile(BaseModel):
 class Stakeholder(BaseModel):
     key: str
     governanceBoardDID: str
-    stakeholderServices: List = []
     #stakeholderServices: List[SHServices]
     stakeholderRoles: List[SHRoles] = Field(..., min_items=1)
     #stakeholderRoles: SHRoles
     stakeholderProfile: SHProfile
-    handler_url: str
+    handler_url: HttpUrl
 
 
 #class ReadStakeDID(BaseModel):
@@ -88,3 +89,7 @@ class Stakeholder(BaseModel):
 class ReadOfferDID(BaseModel):
     token: str
     did_identifier: str
+
+class License(BaseModel):
+    id_token: str
+    stakeholderServices: List = Field(..., min_items=1)

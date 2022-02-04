@@ -1,5 +1,7 @@
 .env
+.env_2
 .env_admin
+.env_regulator
 __pycache__
 docker-compose-production.yml
 app/logs

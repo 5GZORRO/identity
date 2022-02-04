@@ -9,29 +9,33 @@ from loguru import logger
 from app.config import log_config
 
 logger.remove()
-logger.add("./app/logs/file_holder_agent.log", format="{time:YYYY-MM-DD at HH:mm:ss} | {level}: {message} | {function} in line {line} on {file}", rotation="5 MB")
+logger.add("./app/logs/file_regulator_agent.log", format="{time:YYYY-MM-DD at HH:mm:ss} | {level}: {message} | {function} in line {line} on {file}", rotation="5 MB")
 
 #Verification Key
-from app.bootstrap.key import key_pair # holder_key,
+from app.bootstrap.key import key_pair
 #Database Setup
-from app.db import mongo_setup_provider
+from app.db import mongo_setup_provider # For Holder Operations
+from app.db import mongo_setup_regulator
 #Connection First
-#from app.bootstrap import setup_verifier #setup_issuer,
-#Setup VC Schema
-#from app.bootstrap import setup_vc_schema
+from app.bootstrap import setup_issuer #, setup_verifier
+#Setup required Schemas
+from app.bootstrap import setup_license_schema
 
 
 from app.authentication import send_proof, get_key_pair
-from app.holder import holder_stakeholder, holder_license, holder_did
+from app.holder import holder_stakeholder, holder_did
+from app.regulator import regulator_license
+#from app.verifier import verifier
 
-with open('app/openapi/openapi_trading_provider.json') as json_file:
+with open('app/openapi/openapi_regulator.json') as json_file:
     tags_metadata = json.load(json_file)
+
 
 app = FastAPI(
     docs_url="/",
     openapi_tags=tags_metadata,
     openapi_url="/openapi.json",
-    title="Identity & Permissions Manager - Trading Provider Agent API",
+    title="Identity & Permissions Manager - Regulator Agent API",
     description="""This is a project able to supply the mechanisms required for generating unique identifiers in 5GZORRO ecosystem, recognising communicating endpoints, 
         identifying and authenticating entities, services, and organizations, and authorising consumer requests to access a preserved services and resources."""
 )
@@ -47,12 +51,10 @@ app.add_middleware(
 )
 
 ######## Routes to Endpoints in Different Files ########
-#app.include_router(did.router)
+app.include_router(holder_stakeholder.router)
+app.include_router(holder_did.router)
+app.include_router(regulator_license.router)
 app.include_router(get_key_pair.router)
 app.include_router(send_proof.router)
-app.include_router(holder_stakeholder.router)
-app.include_router(holder_license.router)
-app.include_router(holder_did.router)
 
-#holder_key.holder_key_create()
 key_pair.operator_key_pair_create()

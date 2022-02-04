@@ -107,7 +107,9 @@ git clone https://github.com/hyperledger/aries-cloudagent-python
 ```
 Check the following wiki: https://github.com/5GZORRO/identity/wiki/How-to-install-ACA-PY-0.6.0 to perform the required steps to run the Agents
 
-Now it's possible to initialize the agents. To run the Issuer Agent use the command available in https://github.com/5GZORRO/identity/wiki/IssuerAgent-Startup-and-Settings. Issuer Agent will be running on port 8021.
+Now it's possible to initialize the agents. To run the Admin Agent use the command available in https://github.com/5GZORRO/identity/wiki/Admin-Agent-Startup-and-Settings. Admin Agent will be running on port 8021.
+
+Afterwards, run the Regulator Agent similar to in https://github.com/5GZORRO/identity/wiki/Regulator-Agent-Startup-and-Settings.  Regulator Agent will be running on port 8011.
 
 To then run the Holder Agent use the command provided in https://github.com/5GZORRO/identity/wiki/Holder-Agent-Startup-and-Settings. Holder Agent will be running on port 8031.
 
@@ -118,7 +120,7 @@ Finally, run the Verifier Agent by using the command provided in https://github.
   * Von-network running
   * Agents running
 
-Before running this project, you must create an .env file & an .env_admin file, based on the .env.template & .env_admin.template files available in identity/src, respectively. Further detailing can be found in said file.
+Before running this project, you must create an .env file (for Operator B), .env_2 (for Operator C), .env_regulator (for Regulator) & an .env_admin file (for Operator A), based on the .env.template, .env_admin.template & .env_regulator.template files available in identity/src, respectively. Further detailing can be found in said files.
 
 To run the Identity Controllers, go to identity/src folder, then type in the command line:
 ```
@@ -128,6 +130,4 @@ To stop the project, simply type:
 ```
 docker-compose down
 ```
-The Administrator and Trading Provider Controllers should now be available. To access Trading Provider, simply type http://localhost:6800/ on your preferred browser.
-
-To retrieve the private holder agent key to perform a Stakeholder Credential issuance request, you can do so through **/src/app/logs/file_holder_agent.log**
+The Administrator, Trader & Regulator Controllers should now be available. To access the Trader, simply type http://localhost:6800/ on your preferred browser.

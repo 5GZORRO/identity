@@ -18,3 +18,6 @@ collection = db.offers
 
 # Collection for: stakeholder
 stakeholder_col = db.stakeholder
+
+# Collection for: license
+license_collection = db.licenses

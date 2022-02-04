@@ -31,13 +31,15 @@ async def register_stakeholder(response: Response, body: Stakeholder): #key: str
         return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content="Unable to authenticate provided key")
 
     # CHECK FOR ACTIVE STAKE CRED
-    #try:
-    #    subscriber = mongo_setup_provider.stakeholder_col.find_one({"revoked" : { "$exists" : False} }, {"_id": 0, "handler_url": 0})
-    #    if subscriber != None:
-    #        response.status_code = status.HTTP_409_CONFLICT
-    #        return "A Stakeholder Credential has already been requested/issued"
-    #except:
-    #    return "Unable to check for active stakeholder credential"
+    try:
+        # Find one not equal to Declined
+        subscriber = mongo_setup_provider.stakeholder_col.find_one({"state": {"$ne": State.stakeholder_decline}, "revoked" : { "$exists" : False} }, {"_id": 0, "handler_url": 0})
+        if subscriber is not None:
+            return JSONResponse(status_code=status.HTTP_409_CONFLICT, content="A Stakeholder Credential has already been requested/issued")
+
+    except Exception as error:
+        logger.error(error)
+        return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content="Unable to check for active stakeholder credential")
 
     # PRIVATE DID
     try:
@@ -59,7 +61,6 @@ async def register_stakeholder(response: Response, body: Stakeholder): #key: str
         res_to_mongo = {
             "stakeholderClaim": {
                 "governanceBoardDID": body_dict["governanceBoardDID"],
-                "stakeholderServices": body_dict["stakeholderServices"],
                 #"stakeholderRoles": {
                 #    "role": body_dict["stakeholderRoles"]["role"],
                 #    "assets": body_dict["stakeholderRoles"]["assets"]
@@ -92,7 +93,6 @@ async def register_stakeholder(response: Response, body: Stakeholder): #key: str
         res_to_admin = {
             "stakeholderClaim": {
                 "governanceBoardDID": body_dict["governanceBoardDID"],
-                "stakeholderServices": body_dict["stakeholderServices"],
                 #"stakeholderRoles": {
                 #    "role": body_dict["stakeholderRoles"]["role"],
                 #    "assets": body_dict["stakeholderRoles"]["assets"]
@@ -136,14 +136,14 @@ async def update_stakeholder_state(request_id: str, body: dict, response: Respon
     #UPDATE MONGO RECORD
     try:
         mongo_setup_provider.stakeholder_col.find_one_and_update({'_id': ObjectId(request_id)}, {'$set': {"state": State.stakeholder_issue, "credential_definition_id": body["credential_definition_id"], "id_token": body["id_token"]}}) # UPDATE REQUEST RECORD FROM MONGO
-        subscriber = mongo_setup_provider.stakeholder_col.find_one({"_id": ObjectId(request_id)})
+        subscriber = mongo_setup_provider.stakeholder_col.find_one({"_id": ObjectId(request_id)}, {"_id": 0})
 
     except Exception as error:
         logger.error(error)
         return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content="Unable to update Mongo record")
     
     # SEND REQUEST RECORD TO HOLDER HANDLER
-    thread = threading.Thread(target = utils.send_to_holder, args=(subscriber["handler_url"],body,), daemon=True)
+    thread = threading.Thread(target = utils.send_to_holder, args=(subscriber["handler_url"],subscriber,), daemon=True)
     thread.start()
 
 @router.post("/decline_stakeholder/{request_id}", include_in_schema=False)

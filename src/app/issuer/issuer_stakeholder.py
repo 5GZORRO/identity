@@ -166,7 +166,6 @@ def process_holder_request(request_id: str, body: dict):
             "holder_request_id": request_id,
             "stakeholderClaim": {
                 "governanceBoardDID": body_dict["stakeholderClaim"]["governanceBoardDID"],
-                "stakeholderServices": body_dict["stakeholderClaim"]["stakeholderServices"],
                 #"stakeholderRoles": {
                 #    "role": body_dict["stakeholderClaim"]["stakeholderRoles"]["role"],
                 #    "assets": body_dict["stakeholderClaim"]["stakeholderRoles"]["assets"]
@@ -195,3 +194,19 @@ def process_holder_request(request_id: str, body: dict):
     except Exception as error:
         logger.error(error)
         return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content="Unable to connect to Admin Handler")  
+
+
+@router.get("/stakeholder/approved")
+async def read_all_issued_stakeholder():
+    try:
+        subscriber = mongo_setup_admin.stakeholder_col.find({"state": State.stakeholder_issue, "revoked" : {"$exists" : False}}, {"_id": 0, "holder_request_id":0, "state": 0, "service_endpoint": 0})
+        result_list = []
+
+        for result_object in subscriber:
+            result_list.append(result_object)
+
+        return result_list
+
+    except Exception as error:
+        logger.error(error)
+        return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content="Unable to fetch issued Stakeholder Credentials")

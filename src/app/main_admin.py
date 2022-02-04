@@ -2,7 +2,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.responses import RedirectResponse
-import json
+import json, os
 
 #Log Configuration
 from loguru import logger
@@ -16,6 +16,8 @@ from app.bootstrap.key import key_pair # holder_key, issuer_key
 #Database Setup
 from app.db import mongo_setup_provider # For Holder Operations
 from app.db import mongo_setup_admin
+# Admin Cred Onboarding
+from app.bootstrap import onboard_admin
 #Connection First
 from app.bootstrap import setup_issuer #, setup_verifier
 #Setup required Schemas
@@ -23,7 +25,7 @@ from app.bootstrap import setup_vc_schema, setup_stake_schema
 
 
 from app.authentication import send_proof, verify_credential, get_key_pair
-from app.holder import holder_stakeholder, holder_did
+from app.holder import holder_stakeholder, holder_license, holder_did
 from app.issuer import issuer_stakeholder, issuer_did
 #from app.verifier import verifier
 
@@ -40,14 +42,7 @@ app = FastAPI(
         identifying and authenticating entities, services, and organizations, and authorising consumer requests to access a preserved services and resources."""
 )
 
-origins = [
-    "http://localhost:3000",
-    "http://172.28.3.126:30008",
-    "http://172.28.3.126:30009",
-    "http://172.28.3.126:30010",
-    "http://172.28.3.126:30011",
-    "https://5gzorro.netlify.app",
-]
+origins = os.environ["WHITELIST"]
 
 app.add_middleware(
     CORSMiddleware,
@@ -60,6 +55,7 @@ app.add_middleware(
 ######## Routes to Endpoints in Different Files ########
 #app.include_router(did.router)
 app.include_router(holder_stakeholder.router)
+app.include_router(holder_license.router)
 app.include_router(holder_did.router)
 app.include_router(issuer_stakeholder.router)
 app.include_router(issuer_did.router)
@@ -70,4 +66,5 @@ app.include_router(verify_credential.router)
 
 #holder_key.holder_key_create()
 key_pair.operator_key_pair_create()
+onboard_admin.onboard_administrator()
 #issuer_key.issuer_key_create()

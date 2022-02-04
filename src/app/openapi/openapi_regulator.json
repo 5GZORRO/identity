@@ -1,0 +1,14 @@
+[
+    {
+        "name": "authentication",
+        "description": "Operations regarding Credential Verifications."
+    },
+    {
+        "name": "holder",
+        "description": "Operations regarding Holder Requests."   
+    },
+    {
+        "name": "regulator",
+        "description": "Operations regarding Regulator Requests."   
+    }
+]

@@ -1,8 +1,8 @@
 version: '3'
 services: 
-    admin_agent:
+    admin_operator_a_agent:
         build: ./
-        container_name: admin_agent
+        container_name: admin_operator_a_agent
         #networks:
         #    front:
         #        ipv4_address: 172.220.18.0
@@ -15,44 +15,49 @@ services:
         env_file:
             - .env_admin
         depends_on:
-            - mongodb_admin_container
+            - mongodb_operator_a_container
     
-    #regulator_agent:
-    #    build: ../src/Regulator_Agent
-    #    container_name: regulator_agent
-    #    command: uvicorn app.main:app --reload --workers 1 --host 0.0.0.0 --port 8000
-    #    ports:
-    #        - "6400:8000"
-    #    restart: always
-    #    env_file:
-    #        - ../src/.env
-
-    #trading_consumer_agent:
-    #    build: ../src/Trading_Consumer_Agent
-    #    container_name: trading_consumer_agent
-    #    command: uvicorn app.main:app --reload --workers 1 --host 0.0.0.0 --port 8000
-    #    ports:
-    #        - "6600:8000"
-    #    restart: always
-    #    env_file:
-    #        - ../src/.env
-    
-    trading_provider_agent:
+    trader_operator_b_agent:
         build: ./
-        container_name: trading_provider_agent
+        container_name: trader_operator_b_agent
         command: uvicorn app.main_trading_provider:app --reload --workers 1 --host 0.0.0.0 --port 8000 --log-level error
         ports:
             - "6800:8000"
-        #restart: always
         volumes:
             - "./app/logs:/usr/src/app/logs"
         env_file:
             - .env
         depends_on:
-            - mongodb_trade_provider_container
-        #    - mongodb_container
-    
-    mongodb_admin_container:
+            - mongodb_operator_b_container
+
+    trader_operator_c_agent:
+        build: ./
+        container_name: trader_operator_c_agent
+        command: uvicorn app.main_trading_provider:app --reload --workers 1 --host 0.0.0.0 --port 8000 --log-level error
+        ports:
+            - "6600:8000"
+        volumes:
+            - "./app/logs:/usr/src/app/logs"
+        env_file:
+            - .env_2
+        depends_on:
+            - mongodb_operator_c_container
+
+    regulator_a_agent:
+        build: ./
+        container_name: regulator_a_agent
+        command: uvicorn app.main_regulator:app --reload --workers 1 --host 0.0.0.0 --port 8000 --log-level error
+        ports:
+            - "6300:8000"
+        volumes:
+            - "./app/logs:/usr/src/app/logs"
+        env_file:
+            - .env_regulator
+        depends_on:
+            - mongodb_regulator_a_container
+
+
+    mongodb_operator_a_container:
         image: mongo:latest
         #environment:
         #    MONGO_INITDB_ROOT_USERNAME: root
@@ -60,18 +65,34 @@ services:
         ports:
             - 27017:27017
         volumes:
-            - mongodb_admin_data_container:/data/db
+            - mongodb_operator_a_data_container:/data/db
 
-    mongodb_trade_provider_container:
+    mongodb_operator_b_container:
         image: mongo:latest
         ports:
             - 27018:27017
         volumes:
-            - mongodb_provider_data_container:/data/db
+            - mongodb_operator_b_data_container:/data/db
+
+    mongodb_operator_c_container:
+        image: mongo:latest
+        ports:
+            - 27020:27017
+        volumes:
+            - mongodb_operator_c_data_container:/data/db
+
+    mongodb_regulator_a_container:
+        image: mongo:latest
+        ports:
+            - 27019:27017
+        volumes:
+            - mongodb_regulator_a_data_container:/data/db
 
 volumes:
-    mongodb_admin_data_container:
-    mongodb_provider_data_container:
+    mongodb_operator_a_data_container:
+    mongodb_operator_b_data_container:
+    mongodb_operator_c_data_container:
+    mongodb_regulator_a_data_container:
     
         
 #networks:
