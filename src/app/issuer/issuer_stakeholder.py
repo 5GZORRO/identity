@@ -1,5 +1,5 @@
 from typing import Optional
-from fastapi import APIRouter, Response, status
+from fastapi import APIRouter, Response, status, Query
 from fastapi.responses import JSONResponse
 import requests, json, os, threading
 
@@ -11,7 +11,7 @@ from app.bootstrap import setup_issuer, setup_stake_schema
 #from app.authentication import authentication
 
 # classes
-from app.issuer.classes import ReqStakeCred, IssueStakeCred, State, ResolveStake
+from app.issuer.classes import ReqStakeCred, IssueStakeCred, State, ResolveStake, StateQuery
 
 router = APIRouter(
     prefix="/issuer",
@@ -22,21 +22,26 @@ header = {
     'Content-Type': 'application/json'        
 }
 
-
-@router.get("/stakeholder/pending")
-async def read_pending_stakeholder_approval(response: Response):
+@router.get("/stakeholder", status_code=200)
+async def query_stakeholder_creds(state: set[StateQuery] = Query(...)):
     try:
         result_list = []
-        subscriber = mongo_setup_admin.stakeholder_col.find({"state" : State.stakeholder_request, "revoked" : { "$exists" : False}}, {"_id": 0, "service_endpoint": 0})
-        
-        for result_object in subscriber:
-            result_list.append(result_object)
+        for status in state:
+            if status == "approved":
+                subscriber = mongo_setup_admin.stakeholder_col.find({"state": State.stakeholder_issue, "revoked" : {"$exists" : False}}, {"_id": 0, "holder_request_id":0, "service_endpoint": 0})
+            elif status == "pending":
+                subscriber = mongo_setup_admin.stakeholder_col.find({"state": State.stakeholder_request, "revoked" : {"$exists" : False}}, {"_id": 0, "holder_request_id":0, "service_endpoint": 0})
+            else:
+                subscriber = mongo_setup_admin.stakeholder_col.find({"state": State.stakeholder_decline, "revoked" : {"$exists" : False}}, {"_id": 0, "holder_request_id":0, "service_endpoint": 0})
+
+            for result_object in subscriber:
+                result_list.append(result_object)
 
         return result_list
 
     except Exception as error:
         logger.error(error)
-        return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content="Unable to read pending Stakeholder Credentials for approval")
+        return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content="Unable to fetch Stakeholder Credentials on Database")
 
 
 @router.put("/stakeholder/resolve", status_code=200)
@@ -194,19 +199,3 @@ def process_holder_request(request_id: str, body: dict):
     except Exception as error:
         logger.error(error)
         return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content="Unable to connect to Admin Handler")  
-
-
-@router.get("/stakeholder/approved")
-async def read_all_issued_stakeholder():
-    try:
-        subscriber = mongo_setup_admin.stakeholder_col.find({"state": State.stakeholder_issue, "revoked" : {"$exists" : False}}, {"_id": 0, "holder_request_id":0, "state": 0, "service_endpoint": 0})
-        result_list = []
-
-        for result_object in subscriber:
-            result_list.append(result_object)
-
-        return result_list
-
-    except Exception as error:
-        logger.error(error)
-        return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content="Unable to fetch issued Stakeholder Credentials")

@@ -1,5 +1,5 @@
 from typing import Optional, List
-from fastapi import APIRouter, Response, status
+from fastapi import APIRouter, Response, status, Header
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 import requests, json, sys, os, time, threading, jwt
@@ -16,7 +16,7 @@ router = APIRouter(
 )
 
 @router.get("/operator_key_pair", status_code=200)
-async def get_key_pair(response: Response, shared_secret: str):
+async def get_key_pair(response: Response, shared_secret: str = Header(...)):
     # Fetch bootstrap public key
     try:
         # Check shared component secret

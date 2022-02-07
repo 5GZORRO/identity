@@ -1,5 +1,5 @@
 from typing import Optional
-from fastapi import APIRouter, Response, status
+from fastapi import APIRouter, Response, status, Query
 from fastapi.responses import JSONResponse
 import requests, json, os, threading
 
@@ -10,7 +10,7 @@ from app.db import mongo_setup_provider, mongo_setup_regulator
 from app.bootstrap import setup_issuer, setup_license_schema
 
 # classes
-from app.regulator.classes import ReqLicenseCred, State, ResolveLicense
+from app.regulator.classes import ReqLicenseCred, State, ResolveLicense, StateQuery
 
 router = APIRouter(
     prefix="/regulator",
@@ -77,20 +77,26 @@ def process_holder_request(request_id: str, body: dict):
         return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content="Unable to connect to Regulator Handler")  
 
 
-@router.get("/license/pending")
-async def read_pending_license_approval():
+@router.get("/license", status_code=200)
+async def query_license_creds(state: set[StateQuery] = Query(...)):
     try:
         result_list = []
-        subscriber = mongo_setup_regulator.license_collection.find({"state" : State.license_request, "revoked" : { "$exists" : False}}, {"_id": 0, "service_endpoint": 0})
-        
-        for result_object in subscriber:
-            result_list.append(result_object)
+        for status in state:
+            if status == "approved":
+                subscriber = mongo_setup_regulator.license_collection.find({"state" : State.license_issue, "revoked" : {"$exists" : False}}, {"_id": 0, "holder_request_id":0, "service_endpoint": 0})
+            elif status == "pending":
+                subscriber = mongo_setup_regulator.license_collection.find({"state" : State.license_request, "revoked" : {"$exists" : False}}, {"_id": 0, "holder_request_id":0, "service_endpoint": 0})
+            else:
+                subscriber = mongo_setup_regulator.license_collection.find({"state" : State.license_decline, "revoked" : {"$exists" : False}}, {"_id": 0, "holder_request_id":0, "service_endpoint": 0})
+
+            for result_object in subscriber:
+                result_list.append(result_object)
 
         return result_list
 
     except Exception as error:
         logger.error(error)
-        return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content="Unable to read pending Stakeholder License Credentials for approval")
+        return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content="Unable to fetch License Credentials on Database")
 
 
 @router.put("/license/resolve", status_code=200)
@@ -192,19 +198,3 @@ async def resolve_pending_license_approval(response: Response, body: ResolveLice
     except Exception as error:
         logger.error(error)
         return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content="Unable to resolve pending Stakeholder License Credential for approval")
-
-
-@router.get("/license/approved")
-async def read_all_issued_license():
-    try:
-        subscriber = mongo_setup_regulator.license_collection.find({"state": State.license_issue, "revoked" : {"$exists" : False}}, {"_id": 0, "holder_request_id":0, "state": 0, "service_endpoint": 0})
-        result_list = []
-
-        for result_object in subscriber:
-            result_list.append(result_object)
-
-        return result_list
-
-    except Exception as error:
-        logger.error(error)
-        return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content="Unable to fetch issued Stakeholder License Credentials")

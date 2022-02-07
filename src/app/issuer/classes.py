@@ -3,6 +3,11 @@ from pydantic import BaseModel
 from enum import Enum
 
 ### State -> Enums ###
+class StateQuery(str, Enum):
+    pending = 'pending'
+    approved = 'approved'
+    rejected = 'rejected'
+
 class State(str, Enum):
     stakeholder_request = 'Stakeholder Registration Requested'
     stakeholder_issue = 'Stakeholder Registered'
