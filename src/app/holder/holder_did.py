@@ -63,12 +63,12 @@ async def request_credential(response: Response, body: Offer):
         res_to_mongo = {
             "type": body_dict["type"],
             "credentialSubject": {
-                "id": did,
+                "id": did
                 #"assets": body_dict["assets"],
-                "claims": body_dict["claims"]
+                #"claims": body_dict["claims"]
             },
             "timestamp": epoch_ts,
-            "state": State.did_offer_request,
+            "state": State.did_offer_issue, #State.did_offer_request
             "handler_url": body_dict["handler_url"]
         }
         client_res = copy.deepcopy(res_to_mongo)
@@ -77,10 +77,11 @@ async def request_credential(response: Response, body: Offer):
 
     except Exception as error:
         logger.error(error)
-        return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content="Unable to store Credential request on Database")
+        return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content="Unable to store DID request on Database")
 
-    # SEND TO ADMIN
+    # SEND TO ADMIN - Deprecated
     try:
+        '''   
         res_to_admin = {
             "type": body_dict["type"],
             "credentialSubject": {
@@ -97,7 +98,7 @@ async def request_credential(response: Response, body: Offer):
         
         URL = os.environ["ADMIN_AGENT_CONTROLLER_URL"]
         requests.post(URL+"/issuer/request_credential_issue/"+str(res_to_mongo["_id"]), json=res_to_admin, timeout=60)
-       
+        '''   
         # SEND TO HOLDER HANDLER
         worker = threading.Thread(target = utils.send_to_holder, args=(body_dict["handler_url"],client_res,), daemon=True)
         worker.start()
@@ -106,7 +107,7 @@ async def request_credential(response: Response, body: Offer):
         
     except Exception as error:
         logger.error(error)
-        return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content="Unable to perform Credential issuing request")
+        return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content="Unable to perform DID issuing request")
 
 
 @router.post("/decline_offer_did/{request_id}", include_in_schema=False)

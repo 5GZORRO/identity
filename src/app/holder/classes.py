@@ -7,9 +7,10 @@ class State(str, Enum):
     stakeholder_request = 'Stakeholder Registration Requested'
     stakeholder_issue = 'Stakeholder Registered'
     stakeholder_decline = 'Stakeholder Declined'
-    did_offer_request = 'Credential Requested'
-    did_offer_issue = 'Credential Issued'
-    did_offer_decline = 'Credential Declined'
+    #did_offer_request = 'Credential Requested'
+    #did_offer_issue = 'Credential Issued'
+    #did_offer_decline = 'Credential Declined'
+    did_offer_issue = 'DID Issued'
     license_request = 'Stakeholder License Registration Requested'
     license_issue = 'Stakeholder License Registered'
     license_decline = 'Stakeholder License Declined'
@@ -45,7 +46,7 @@ class Offer(BaseModel):
     type: Type
     #assets: List[Assets] = Field(..., min_items=1)
     #claims: dict
-    claims: list = []
+    #claims: list = []
     handler_url: str
 
 

@@ -16,12 +16,12 @@ router = APIRouter(
 )
 
 @router.get("/operator_key_pair", status_code=200)
-async def get_key_pair(response: Response, shared_secret: str = Header(...)):
+async def get_key_pair(response: Response, did: str = Header(...)):
     # Fetch bootstrap public key
     try:
         # Check shared component secret
-        if shared_secret != os.environ["KEY"]:
-            return JSONResponse(status_code=status.HTTP_401_UNAUTHORIZED, content="Invalid component secret")
+        if did != key_pair.did_key:
+            return JSONResponse(status_code=status.HTTP_401_UNAUTHORIZED, content="Invalid Operator DID")
         else:
             key_pair_res = {
                 "public_key": key_pair.pub_key,
