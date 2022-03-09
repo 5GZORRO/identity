@@ -65,6 +65,5 @@ app.include_router(verify_credential.router)
 #app.include_router(verifier.router)
 
 #holder_key.holder_key_create()
-key_pair.operator_key_pair_create()
 onboard_admin.onboard_administrator()
 #issuer_key.issuer_key_create()

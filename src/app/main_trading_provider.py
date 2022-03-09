@@ -55,4 +55,3 @@ app.include_router(holder_license.router)
 app.include_router(holder_did.router)
 
 #holder_key.holder_key_create()
-key_pair.operator_key_pair_create()

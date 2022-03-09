@@ -56,5 +56,3 @@ app.include_router(holder_did.router)
 app.include_router(regulator_license.router)
 app.include_router(get_key_pair.router)
 app.include_router(send_proof.router)
-
-key_pair.operator_key_pair_create()
