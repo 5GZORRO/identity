@@ -26,10 +26,10 @@ class Assets(str, Enum):
     Edge = 'Edge'
     Cloud = 'Cloud'
     Spectrum = 'Spectrum'
-    RadioAccessNetwork = 'RadioAccessNetwork'
-    VirtualNetworkFunction = 'VirtualNetworkFunction'
-    NetworkSlice = 'NetworkSlice'
-    NetworkService = 'NetworkService'
+    RadioAccessNetwork = 'RAN'
+    VirtualNetworkFunction = 'VNF'
+    NetworkSlice = 'Slice'
+    NetworkService = 'Network Service'
 
 ### Role -> Enums ###
 class Type(str, Enum):
