@@ -19,7 +19,7 @@ def onboard_administrator():
                     "stakeholderRoles": [
                         {
                             "role": "Administrator",
-                            "assets": ["Edge", "Cloud", "Spectrum", "RadioAccessNetwork", "VirtualNetworkFunction", "NetworkSlice", "NetworkService"]
+                            "assets": ["Edge", "Cloud", "Spectrum", "RAN", "VNF", "Slice", "Network Service"]
                         }
                     ],
                     "stakeholderProfile": {
