@@ -16,8 +16,8 @@ def operator_key_pair_create():
         pubKey = privKey.public_key
         key_pair_res = {
             "DID": ''.join(random.choices(string.ascii_uppercase + string.ascii_lowercase + string.digits, k=22)),
-            "public_key": binascii.b2a_base64(bytes(privKey)).decode("utf-8").strip(),
-            "private_key": binascii.b2a_base64(bytes(pubKey)).decode("utf-8").strip(),
+            "public_key": binascii.b2a_base64(bytes(pubKey)).decode("utf-8").strip(),
+            "private_key": binascii.b2a_base64(bytes(privKey)).decode("utf-8").strip(),
             "timestamp": str(int(time.time()))
         }
         client_key_res = copy.deepcopy(key_pair_res)
