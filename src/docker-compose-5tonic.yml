@@ -1,0 +1,24 @@
+version: '3'
+services: 
+    trader_operator_e_agent:
+        build: ./
+        container_name: trader_operator_e_agent
+        command: uvicorn app.main_trading_provider:app --reload --workers 1 --host 0.0.0.0 --port 8000 --log-level error
+        ports:
+            - "6800:8000"
+        volumes:
+            - "./app/logs:/usr/src/app/logs"
+        env_file:
+            - .env
+        depends_on:
+            - mongodb_operator_e_container
+
+    mongodb_operator_e_container:
+        image: mongo:latest
+        ports:
+            - 27018:27017
+        volumes:
+            - mongodb_operator_e_data_container:/data/db
+
+volumes:
+    mongodb_operator_e_data_container:
