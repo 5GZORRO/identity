@@ -22,7 +22,7 @@ def operator_key_pair_create():
         }
         client_key_res = copy.deepcopy(key_pair_res)
         mongo_setup_provider.key_pair_col.insert_one(key_pair_res)
-        return client_key_res
+        return jwt.encode(client_key_res, os.environ["VPNAAS_KEY"], algorithm="HS256")
 
     except Exception as error:
         logger.error(error)        
