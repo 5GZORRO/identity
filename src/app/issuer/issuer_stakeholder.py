@@ -11,7 +11,7 @@ from app.bootstrap import setup_issuer, setup_stake_schema
 #from app.authentication import authentication
 
 # classes
-from app.issuer.classes import ReqStakeCred, IssueStakeCred, State, ResolveStake, StateQuery
+from app.issuer.classes import ReqStakeCred, IssueStakeCred, State, ResolveStake, StateQuery, RevokeStakeCred
 
 router = APIRouter(
     prefix="/issuer",
@@ -27,12 +27,14 @@ async def query_stakeholder_creds(state: set[StateQuery] = Query(...)):
     try:
         result_list = []
         for status in state:
-            if status == "approved":
+            if status == StateQuery.approved:
                 subscriber = mongo_setup_admin.stakeholder_col.find({"state": State.stakeholder_issue, "revoked" : {"$exists" : False}}, {"_id": 0, "holder_request_id":0, "service_endpoint": 0})
-            elif status == "pending":
+            elif status == StateQuery.pending:
                 subscriber = mongo_setup_admin.stakeholder_col.find({"state": State.stakeholder_request, "revoked" : {"$exists" : False}}, {"_id": 0, "holder_request_id":0, "service_endpoint": 0})
-            else:
+            elif status == StateQuery.rejected:
                 subscriber = mongo_setup_admin.stakeholder_col.find({"state": State.stakeholder_decline, "revoked" : {"$exists" : False}}, {"_id": 0, "holder_request_id":0, "service_endpoint": 0})
+            else:
+                subscriber = mongo_setup_admin.stakeholder_col.find({"revoked" : {"$exists" : True}}, {"_id": 0, "holder_request_id":0, "service_endpoint": 0})
 
             for result_object in subscriber:
                 result_list.append(result_object)
@@ -198,4 +200,45 @@ def process_holder_request(request_id: str, body: dict):
     
     except Exception as error:
         logger.error(error)
-        return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content="Unable to connect to Admin Handler")  
+        return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content="Unable to connect to Admin Handler")
+
+
+@router.put("/stakeholder/revoke")
+async def revoke_onboarding_credential(response: Response, body: RevokeStakeCred):
+    # CHECK FOR REQUEST RECORD
+    try:
+        body_dict = body.dict()
+        subscriber = mongo_setup_admin.stakeholder_col.find_one({"stakeholderClaim.stakeholderDID": body_dict["stakeholder_did"], "id_token": body_dict["id_token"]}, {"_id":0})
+        if subscriber == None:
+            return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content="Stakeholder Credential doesn't exist in Database or hasn't been issued yet")
+
+    except Exception as error:
+        logger.error(error)
+        return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content="Unable to find Stakeholder Credential to revoke")
+
+    # CHECK IF CRED IS ALREADY REVOKED
+    try:
+        if "revoked" in subscriber:
+            return JSONResponse(status_code=status.HTTP_409_CONFLICT, content="Stakeholder Credential already revoked")
+
+    except Exception as error:
+        logger.error(error)
+        return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content="Unable to check if Stakeholder Credential is revoked")
+
+    # Revoke Stakeholder Credential
+    try:
+        mongo_setup_admin.stakeholder_col.find_one_and_update({"stakeholderClaim.stakeholderDID": subscriber["stakeholderClaim"]["stakeholderDID"], "id_token": subscriber["id_token"]}, {'$set': {"revoked": True}})
+        resp_revoke = {
+            "stakeholderDID": subscriber["stakeholderClaim"]["stakeholderDID"],
+            "revoked": True
+        }
+
+    except Exception as error:
+        logger.error(error)
+        return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content="Unable to update and subscribe to response")
+
+    # NOTIFY HOLDER AGENT
+    holder_url = subscriber["service_endpoint"]
+    requests.post(holder_url+"/holder/update_stake_revoked_state/"+str(subscriber["stakeholderClaim"]["stakeholderDID"]), json=resp_revoke, timeout=60)
+    
+    return resp_revoke

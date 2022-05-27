@@ -7,6 +7,7 @@ class StateQuery(str, Enum):
     pending = 'pending'
     approved = 'approved'
     rejected = 'rejected'
+    revoked = 'revoked'
 
 class State(str, Enum):
     stakeholder_request = 'Stakeholder Registration Requested'
@@ -59,3 +60,7 @@ class IssueStakeCred(BaseModel):
 class ResolveStake(BaseModel):
     stakeholder_did: str
     approval: bool
+
+class RevokeStakeCred(BaseModel):
+    id_token: str
+    stakeholder_did: str

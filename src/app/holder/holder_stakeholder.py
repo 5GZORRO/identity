@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Response, status
+from fastapi import APIRouter, Response, status, Query
 from fastapi.responses import JSONResponse
 import requests, json, sys, os, time, threading, copy
 
@@ -11,7 +11,7 @@ from app.db import mongo_setup_provider
 from app.holder import utils
 
 # classes
-from app.holder.classes import Stakeholder, State
+from app.holder.classes import Stakeholder, State, StateQuery
 
 router = APIRouter(
     prefix="/holder",
@@ -32,7 +32,7 @@ async def register_stakeholder(response: Response, body: Stakeholder): #key: str
 
     # CHECK FOR ACTIVE STAKE CRED
     try:
-        # Find one not equal to Declined
+        # Find one not equal to Declined or revoked
         subscriber = mongo_setup_provider.stakeholder_col.find_one({"state": {"$ne": State.stakeholder_decline}, "revoked" : { "$exists" : False} }, {"_id": 0, "handler_url": 0})
         if subscriber is not None:
             return JSONResponse(status_code=status.HTTP_409_CONFLICT, content="A Stakeholder Credential has already been requested/issued")
@@ -131,75 +131,60 @@ async def register_stakeholder(response: Response, body: Stakeholder): #key: str
         return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content="Unable to perform Stakeholder registration request")       
 
 
-@router.post("/update_stakeholder_state/{request_id}", include_in_schema=False)
-async def update_stakeholder_state(request_id: str, body: dict, response: Response):
-    #UPDATE MONGO RECORD
+@router.get("/stakeholder/{stakeholder_did}")
+async def read_specific_stakeholder_by_did(stakeholder_did: str):
     try:
-        mongo_setup_provider.stakeholder_col.find_one_and_update({'_id': ObjectId(request_id)}, {'$set': {"state": State.stakeholder_issue, "credential_definition_id": body["credential_definition_id"], "id_token": body["id_token"]}}) # UPDATE REQUEST RECORD FROM MONGO
-        subscriber = mongo_setup_provider.stakeholder_col.find_one({"_id": ObjectId(request_id)}, {"_id": 0})
-
-    except Exception as error:
-        logger.error(error)
-        return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content="Unable to update Mongo record")
-    
-    # SEND REQUEST RECORD TO HOLDER HANDLER
-    thread = threading.Thread(target = utils.send_to_holder, args=(subscriber["handler_url"],subscriber,), daemon=True)
-    thread.start()
-
-@router.post("/decline_stakeholder/{request_id}", include_in_schema=False)
-async def decline_stakeholder(request_id: str, response: Response):
-    #UPDATE MONGO RECORD
-    try:
-        mongo_setup_provider.stakeholder_col.find_one_and_update({'_id': ObjectId(request_id)}, {'$set': {"state": State.stakeholder_decline}}) # UPDATE REQUEST RECORD FROM MONGO
-        subscriber = mongo_setup_provider.stakeholder_col.find_one({"_id": ObjectId(request_id)}, {"_id": 0})
-
-    except Exception as error:
-        logger.error(error)
-        return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content="Unable to update Mongo record")
-    
-    # SEND REQUEST RECORD TO HOLDER HANDLER
-    thread = threading.Thread(target = utils.send_to_holder, args=(subscriber["handler_url"],subscriber,), daemon=True)
-    thread.start()
-   
-
-@router.get("/read_stakeholder_status")
-async def read_stakeholder_status(response: Response): # key: str, stakeholder_did: str, body: ReadStakeDID
-    #if key != holder_key.verkey:
-    #    response.status_code = status.HTTP_401_UNAUTHORIZED
-    #    return "Invalid Verification Key"
-    try:
-        #body_dict = body.dict()
-        #subscriber = mongo_setup_provider.stakeholder_col.find_one({"stakeholderClaim.stakeholderDID": body_dict["stakeholderDID"]}, {"_id": 0, "handler_url": 0})
-        
-        result_list = []
-        
-        subscriber = mongo_setup_provider.stakeholder_col.find({"revoked" : { "$exists" : False} }, {"_id": 0, "handler_url": 0})
-        #subscriber = mongo_setup_provider.stakeholder_col.find_one({"revoked" : { "$exists" : False} }, {"_id": 0, "handler_url": 0})
-        #if subscriber == None:
-        #    response.status_code = status.HTTP_404_NOT_FOUND
-        #    return "Active Stakeholder Credential non existent or not found"
-        #else: 
-        #    return subscriber
-
-        for result_object in subscriber:
-            result_list.append(result_object)
-
-        return result_list
-
-    except Exception as error:
-        logger.error(error)
-        return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content="Unable to read Stakeholder Credentials")
-
-
-@router.get("/read_stakeholder")
-async def read_specific_stakeholder(response: Response, stakeholder_did: str):
-    try:
-        subscriber = mongo_setup_provider.stakeholder_col.find_one({"stakeholderClaim.stakeholderDID": stakeholder_did, "revoked" : { "$exists" : False}}, {"_id": 0})
+        subscriber = mongo_setup_provider.stakeholder_col.find_one({"stakeholderClaim.stakeholderDID": stakeholder_did}, {"_id": 0})
         if subscriber == None:
-            return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content="Active Stakeholder Credential non existent or not found")
+            # Check other Id&P instances
+            for i in json.loads(os.environ["OTHER_IDP_CONTROLLERS"]):
+                res = requests.get(i+"/holder/stakeholder/"+stakeholder_did+"/others", timeout=60)
+                if res.status_code == 200:
+                    return res.json()
+
+            return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content="Stakeholder Credential non existent or not found")
+
         else: 
             return subscriber
 
     except Exception as error:
         logger.error(error)
         return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content="Unable to read specific Stakeholder Credential")
+
+@router.get("/stakeholder/{stakeholder_did}/others", include_in_schema=False)
+async def read_others_stakeholder_by_did(stakeholder_did: str):
+    try:
+        subscriber = mongo_setup_provider.stakeholder_col.find_one({"stakeholderClaim.stakeholderDID": stakeholder_did}, {"_id": 0, "id_token": 0, "handler_url": 0, "credential_definition_id": 0})
+        if subscriber == None:
+            return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content="Stakeholder Credential non existent or not found")
+
+        else: 
+            return subscriber
+
+    except Exception as error:
+        logger.error(error)
+        return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content="Unable to read specific Stakeholder Credential")
+
+
+@router.get("/stakeholder", status_code=200)
+async def query_stakeholder_creds(state: set[StateQuery] = Query(...)):
+    try:
+        result_list = []
+        for status in state:
+            if status == StateQuery.approved:
+                subscriber = mongo_setup_provider.stakeholder_col.find({"state": State.stakeholder_issue, "revoked" : {"$exists" : False}}, {"_id": 0})
+            elif status == StateQuery.pending:
+                subscriber = mongo_setup_provider.stakeholder_col.find({"state": State.stakeholder_request, "revoked" : {"$exists" : False}}, {"_id": 0})
+            elif status == StateQuery.rejected:
+                subscriber = mongo_setup_provider.stakeholder_col.find({"state": State.stakeholder_decline, "revoked" : {"$exists" : False}}, {"_id": 0})
+            else:
+                subscriber = mongo_setup_provider.stakeholder_col.find({"revoked" : {"$exists" : True}}, {"_id": 0})
+
+            for result_object in subscriber:
+                result_list.append(result_object)
+
+        return result_list
+
+    except Exception as error:
+        logger.error(error)
+        return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content="Unable to fetch Stakeholder Credentials on Database")

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Response, status
+from fastapi import APIRouter, Response, status, Query
 from fastapi.responses import JSONResponse
 import requests, json, sys, os, time, threading, copy
 
@@ -11,7 +11,7 @@ from app.db import mongo_setup_provider
 from app.holder import utils
 
 # classes
-from app.holder.classes import License, State
+from app.holder.classes import License, State, StateQuery
 
 router = APIRouter(
     prefix="/holder",
@@ -23,10 +23,14 @@ async def register_license(response: Response, body: License):
     # AUTH
     try:
         body_dict = body.dict()
-        subscriber = mongo_setup_provider.stakeholder_col.find_one({"id_token": body_dict["id_token"]})
+        subscriber = mongo_setup_provider.stakeholder_col.find_one({"id_token": body_dict["id_token"]}, {"_id": 0})
         if subscriber is not None:
             if body_dict["id_token"] != subscriber["id_token"]:            
                 return JSONResponse(status_code=status.HTTP_401_UNAUTHORIZED, content="Invalid ID Token")
+            
+            elif "revoked" in subscriber:
+                return JSONResponse(status_code=status.HTTP_401_UNAUTHORIZED, content="Revoked Stakeholder is unable to request new Licenses")
+
         else:
             return JSONResponse(status_code=status.HTTP_401_UNAUTHORIZED, content="Invalid ID Token")
 
@@ -54,6 +58,7 @@ async def register_license(response: Response, body: License):
         res_to_mongo = {
             "stakeholderServices": body_dict["stakeholderServices"],
             "id_token": body_dict["id_token"],
+            "stakeholderDID": subscriber["stakeholderClaim"]["stakeholderDID"], 
             "licenseDID": did,
             "timestamp": epoch_ts,
             "state": State.license_request
@@ -71,6 +76,7 @@ async def register_license(response: Response, body: License):
         res_to_reg = {
             "stakeholderServices": body_dict["stakeholderServices"],
             "id_token": body_dict["id_token"],
+            "stakeholderDID": subscriber["stakeholderClaim"]["stakeholderDID"], 
             "licenseDID": did,
             "timestamp": epoch_ts,
             "service_endpoint": os.environ["TRADING_PROVIDER_AGENT_CONTROLLER_URL"],
@@ -87,56 +93,39 @@ async def register_license(response: Response, body: License):
         return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content="Unable to perform Stakeholder License request")       
 
 
-@router.post("/update_license_state/{request_id}", include_in_schema=False)
-async def update_license_state(request_id: str, body: dict, response: Response):
-    #UPDATE MONGO RECORD
+@router.get("/license/did")
+async def read_specific_license_by_did(response: Response, license_did: str):
     try:
-        mongo_setup_provider.license_collection.find_one_and_update({'_id': ObjectId(request_id)}, {'$set': {"state": State.license_issue, "credential_definition_id": body["credential_definition_id"], "credential_exchange_id": body["credential_exchange_id"]}}) # UPDATE REQUEST RECORD FROM MONGO
-        subscriber = mongo_setup_provider.license_collection.find_one({"_id": ObjectId(request_id)}, {"_id": 0})
-
-    except Exception as error:
-        logger.error(error)
-        return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content="Unable to update Mongo record")
-
-@router.post("/decline_license/{request_id}", include_in_schema=False)
-async def decline_license(request_id: str, response: Response):
-    #UPDATE MONGO RECORD
-    try:
-        mongo_setup_provider.license_collection.find_one_and_update({'_id': ObjectId(request_id)}, {'$set': {"state": State.license_decline}}) # UPDATE REQUEST RECORD FROM MONGO
-        subscriber = mongo_setup_provider.license_collection.find_one({"_id": ObjectId(request_id)}, {"_id": 0})
-
-    except Exception as error:
-        logger.error(error)
-        return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content="Unable to update Mongo record")
-    
-
-@router.get("/license/all")
-async def read_license_all():
-    try:
-        result_list = []
-        
-        subscriber = mongo_setup_provider.license_collection.find({"revoked" : { "$exists" : False}}, {"_id": 0})
-
-        for result_object in subscriber:
-            result_list.append(result_object)
-
-        return result_list
-
-    except Exception as error:
-        logger.error(error)
-        return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content="Unable to read Stakeholder License Credentials")
-
-'''
-@router.get("/read_stakeholder")
-async def read_specific_stakeholder(response: Response, stakeholder_did: str):
-    try:
-        subscriber = mongo_setup_provider.stakeholder_col.find_one({"stakeholderClaim.stakeholderDID": stakeholder_did, "revoked" : { "$exists" : False}}, {"_id": 0})
+        subscriber = mongo_setup_provider.license_collection.find_one({"licenseDID": license_did}, {"_id": 0})
         if subscriber == None:
-            return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content="Active Stakeholder Credential non existent or not found")
+            return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content="Stakeholder License Credential non existent or not found")
         else: 
             return subscriber
 
     except Exception as error:
         logger.error(error)
-        return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content="Unable to read specific Stakeholder Credential")
-'''
+        return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content="Unable to read specific Stakeholder License Credential")
+
+
+@router.get("/license", status_code=200)
+async def query_license_creds(state: set[StateQuery] = Query(...)):
+    try:
+        result_list = []
+        for status in state:
+            if status == StateQuery.approved:
+                subscriber = mongo_setup_provider.license_collection.find({"state": State.license_issue, "revoked" : {"$exists" : False}}, {"_id": 0})
+            elif status == StateQuery.pending:
+                subscriber = mongo_setup_provider.license_collection.find({"state": State.license_request, "revoked" : {"$exists" : False}}, {"_id": 0})
+            elif status == StateQuery.rejected:
+                subscriber = mongo_setup_provider.license_collection.find({"state": State.license_decline, "revoked" : {"$exists" : False}}, {"_id": 0})
+            else:
+                subscriber = mongo_setup_provider.license_collection.find({"revoked" : {"$exists" : True}}, {"_id": 0})
+
+            for result_object in subscriber:
+                result_list.append(result_object)
+
+        return result_list
+
+    except Exception as error:
+        logger.error(error)
+        return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content="Unable to fetch Stakeholder License Credentials on Database")

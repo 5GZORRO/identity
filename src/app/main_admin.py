@@ -19,15 +19,19 @@ from app.db import mongo_setup_admin
 # Admin Cred Onboarding
 from app.bootstrap import onboard_admin
 #Connection First
-from app.bootstrap import setup_issuer #, setup_verifier
+from app.bootstrap import setup_issuer
 #Setup required Schemas
 from app.bootstrap import setup_vc_schema, setup_stake_schema
 
 
 from app.authentication import send_proof, verify_credential, get_key_pair
+
+# Holder Agent Ops
 from app.holder import holder_stakeholder, holder_license, holder_did
-from app.issuer import issuer_stakeholder, issuer_did
-#from app.verifier import verifier
+from app.holder.state_update import update_stakeholder, update_license
+
+from app.issuer import issuer_stakeholder
+
 
 with open('app/openapi/openapi_admin.json') as json_file:
     tags_metadata = json.load(json_file)
@@ -53,12 +57,14 @@ app.add_middleware(
 )
 
 ######## Routes to Endpoints in Different Files ########
-#app.include_router(did.router)
 app.include_router(holder_stakeholder.router)
 app.include_router(holder_license.router)
 app.include_router(holder_did.router)
+app.include_router(update_stakeholder.router)
+app.include_router(update_license.router)
+
 app.include_router(issuer_stakeholder.router)
-app.include_router(issuer_did.router)
+
 app.include_router(get_key_pair.router)
 app.include_router(send_proof.router)
 app.include_router(verify_credential.router)

@@ -17,6 +17,7 @@ class State(str, Enum):
 class ReqLicenseCred(BaseModel):
     stakeholderServices: list = []
     id_token: str
+    stakeholderDID: str
     licenseDID: str
     timestamp: str
     service_endpoint: str

@@ -17,15 +17,19 @@ from app.bootstrap.key import key_pair
 from app.db import mongo_setup_provider # For Holder Operations
 from app.db import mongo_setup_regulator
 #Connection First
-from app.bootstrap import setup_issuer #, setup_verifier
+from app.bootstrap import setup_issuer
 #Setup required Schemas
 from app.bootstrap import setup_license_schema
 
 
 from app.authentication import send_proof, get_key_pair
+
+# Holder Agent Ops
 from app.holder import holder_stakeholder, holder_did
+from app.holder.state_update import update_stakeholder
+
 from app.regulator import regulator_license
-#from app.verifier import verifier
+
 
 with open('app/openapi/openapi_regulator.json') as json_file:
     tags_metadata = json.load(json_file)
@@ -53,6 +57,9 @@ app.add_middleware(
 ######## Routes to Endpoints in Different Files ########
 app.include_router(holder_stakeholder.router)
 app.include_router(holder_did.router)
+app.include_router(update_stakeholder.router)
+
 app.include_router(regulator_license.router)
+
 app.include_router(get_key_pair.router)
 app.include_router(send_proof.router)

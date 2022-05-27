@@ -62,6 +62,7 @@ def process_holder_request(request_id: str, body: dict):
             "holder_request_id": request_id,
             "stakeholderServices": body_dict["stakeholderServices"],
             "id_token": body_dict["id_token"],
+            "stakeholderDID": body_dict["stakeholderDID"],
             "licenseDID": body_dict["licenseDID"],
             "timestamp": body_dict["timestamp"],
             "state": State.license_request,

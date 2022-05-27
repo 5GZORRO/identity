@@ -3,6 +3,12 @@ from pydantic import BaseModel, HttpUrl, Field
 from enum import Enum
 
 ### State -> Enums ###
+class StateQuery(str, Enum):
+    pending = 'pending'
+    approved = 'approved'
+    rejected = 'rejected'
+    revoked = 'revoked'
+
 class State(str, Enum):
     stakeholder_request = 'Stakeholder Registration Requested'
     stakeholder_issue = 'Stakeholder Registered'

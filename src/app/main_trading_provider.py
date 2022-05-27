@@ -22,7 +22,11 @@ from app.db import mongo_setup_provider
 
 
 from app.authentication import send_proof, get_key_pair
+
+# Holder Agent Ops
 from app.holder import holder_stakeholder, holder_license, holder_did
+from app.holder.state_update import update_stakeholder, update_license
+
 
 with open('app/openapi/openapi_trading_provider.json') as json_file:
     tags_metadata = json.load(json_file)
@@ -47,11 +51,13 @@ app.add_middleware(
 )
 
 ######## Routes to Endpoints in Different Files ########
-#app.include_router(did.router)
 app.include_router(get_key_pair.router)
 app.include_router(send_proof.router)
+
 app.include_router(holder_stakeholder.router)
 app.include_router(holder_license.router)
 app.include_router(holder_did.router)
+app.include_router(update_stakeholder.router)
+app.include_router(update_license.router)
 
 #holder_key.holder_key_create()
