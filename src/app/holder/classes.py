@@ -90,6 +90,16 @@ class Stakeholder(BaseModel):
     handler_url: HttpUrl
 
 
+class StakeholderResp(BaseModel):
+    stakeholderClaim: dict
+    timestamp: str
+    state: str
+    handler_url: str
+    credential_definition_id: str
+    id_token: str
+    revoked: str
+
+
 #class ReadStakeDID(BaseModel):
 #    stakeholderDID: str
 

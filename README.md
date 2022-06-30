@@ -1,4 +1,4 @@
-![](https://img.shields.io/badge/python-v3.8.3-brightgreen)
+![](https://img.shields.io/badge/python-v3.9.6-brightgreen)
 ![](https://img.shields.io/badge/fastapi-latest-blue)
 ![](https://img.shields.io/badge/mongo-latest-blue)
 ![](https://img.shields.io/badge/docker%20compose-v3-2FBAE0)
@@ -6,100 +6,80 @@
 [![](https://img.shields.io/badge/license-Apache--2.0-blueviolet)](https://github.com/5GZORRO/identity/blob/main/LICENSE)
 
 
-# identity
-Repository of 5G ZORRO Identity and Permissions Manager components source code.
+# Identity & Permissions Manager
+The Identity and Permissions Manager (Id&P) module is responsible for facilitating and coordinating marketplace governance in a decentralized fashion. It supplies the mechanisms required to:
+*	Generate unique identifiers in the 5GZORRO ecosystem.
+*	Recognise communicating endpoints between the Agents.
+*	Identify and authorize entities, services, and organizations to access provisioned services and resources in the 5GZORRO marketplace. 
 
-* **Machine requirements**: 
-  * Ubuntu 20.04 LTS
+
+## Pre-Requisites 
+* **System requirements**: 
+  * 2 vCPUs
+  * 4 GB RAM
+  * 60 GB Storage
+  * Ubuntu 20.04+ LTS Virtual Machine
+
+* **Software requirements**: 
   * Git 
   * Docker
   * Docker-compose
   * Python
+  * VON-Network
 
-## Pre-Requisites 
-### Install Git
+## Software requirements installation
+### Git
 ```python
 sudo apt-get update
-```
-```python
 sudo apt-get install git
-```
-```python
 git --version
 ```
 
-### Install and config Docker
-Reference: https://www.digitalocean.com/community/tutorials/how-to-install-and-use-docker-on-ubuntu-18-04
+### Docker
 ```python
 sudo apt update
-```
-```python
 sudo apt install apt-transport-https ca-certificates curl software-properties-common
-```
-```python
 curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
-```
-```python
 sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu bionic stable"
-```
-```python
 sudo apt update
-```
-```python
 sudo apt install docker-ce
-```
-```python
 sudo systemctl status docker
 ```
 
-### Install Docker-compose
+### Docker-compose
 ```python
 sudo curl -L “https://github.com/docker/compose/releases/download/1.28.5/docker-compose-$(uname -s)-$(uname -m)” -o /usr/local/bin/docker-compose
-```
-```python
 sudo chmod +x /usr/local/bin/docker-compose
-```
-```python
 docker-compose --version
 ```
-Docker compose’s version should be shown.
+**Docker compose’s version should be shown.**
 
-### Install Python
-
+### Python
 Reference: https://www.digitalocean.com/community/tutorials/how-to-install-python-3-and-set-up-a-programming-environment-on-ubuntu-18-04-quickstart
 
-## Build VON-Network
-If all of the previous steps have been completed, it is now possible to initialize a Von-Network.
+### Build VON-Network
+**If all of the previous steps have been assured, it's now possible to initialize a Von-Network.**
 
 Git Repository: https://github.com/bcgov/von-network
 
-Use below command to download code to your local:
+Firstly, clone the project to your local:
 ```python
 git clone https://github.com/bcgov/von-network.git
 ```
-Go to the directory below
+Then, to build & start the network, use:
 ```python
 cd von-network/
-```
-Use below command to build nodes of the network:
-```python
 sudo ./manage build
-```
-Use below command to start nodes of the network:
-```python
 sudo ./manage start
 ```
-All VON-Network nodes should now be active.
+**All VON-Network nodes should now be active.**
 
-## Run Agents 
-
-* **Agents requirements**: 
-  * Von-network running
-  
-### Install Agents
+## Configuration
+Now we can proceed with the Id&P Agents & Controllers configuration.
+### Install & Build Agents
 Git Repository: https://github.com/hyperledger/aries-cloudagent-python
 
-Note: Tested with the 0.6.0 version of aries-cloudagent
+**Note: Tested with the 0.6.0 version of aries-cloudagent**
 
 Use below command to download code to your local machine:
 ```python
@@ -115,10 +95,7 @@ To then run the Holder Agent use the command provided in https://github.com/5GZO
 
 Finally, run the Verifier Agent by using the command provided in https://github.com/5GZORRO/identity/wiki/Verifier-Agent-Startup-and-Settings. Verifier Agent will be running on port 8041.
 
-## Run 5GZorro Agents
-* **Requirements**: 
-  * Von-network running
-  * Agents running
+### Run Id&P Controllers
 
 Before running this project, you must create an .env file (for Operator B), .env_2 (for Operator C), .env_regulator (for Regulator) & an .env_admin file (for Operator A), based on the .env.template, .env_admin.template & .env_regulator.template files available in identity/src, respectively. Further detailing can be found in said files.
 
@@ -131,3 +108,9 @@ To stop the project, simply type:
 docker-compose down
 ```
 The Administrator, Trader & Regulator Controllers should now be available. To access the Trader, simply type http://localhost:6800/ on your preferred browser.
+
+## Maintainers
+**Bruno Santos** - Design & Development - bruno-g-santos@alticelabs.com
+
+## License
+This module is distributed under [Apache 2.0 License](LICENSE) terms.

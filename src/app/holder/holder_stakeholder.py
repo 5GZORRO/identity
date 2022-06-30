@@ -11,7 +11,7 @@ from app.db import mongo_setup_provider
 from app.holder import utils
 
 # classes
-from app.holder.classes import Stakeholder, State, StateQuery
+from app.holder.classes import Stakeholder, StakeholderResp, State, StateQuery
 
 router = APIRouter(
     prefix="/holder",
@@ -131,7 +131,7 @@ async def register_stakeholder(response: Response, body: Stakeholder): #key: str
         return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content="Unable to perform Stakeholder registration request")       
 
 
-@router.get("/stakeholder/{stakeholder_did}")
+@router.get("/stakeholder/{stakeholder_did}", responses={200: {"model": StakeholderResp}})
 async def read_specific_stakeholder_by_did(stakeholder_did: str):
     try:
         subscriber = mongo_setup_provider.stakeholder_col.find_one({"stakeholderClaim.stakeholderDID": stakeholder_did}, {"_id": 0})
@@ -166,7 +166,7 @@ async def read_others_stakeholder_by_did(stakeholder_did: str):
         return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content="Unable to read specific Stakeholder Credential")
 
 
-@router.get("/stakeholder", status_code=200)
+@router.get("/stakeholder", responses={200: {"model": list[StakeholderResp]}})
 async def query_stakeholder_creds(state: set[StateQuery] = Query(...)):
     try:
         result_list = []
