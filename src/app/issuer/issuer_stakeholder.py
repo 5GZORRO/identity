@@ -10,6 +10,8 @@ from app.db import mongo_setup_admin
 from app.bootstrap import setup_issuer, setup_stake_schema
 #from app.authentication import authentication
 
+from app.issuer import utils
+
 # classes
 from app.issuer.classes import ReqStakeCred, IssueStakeCred, State, ResolveStake, StateQuery, RevokeStakeCred
 
@@ -225,13 +227,17 @@ async def revoke_onboarding_credential(response: Response, body: RevokeStakeCred
         logger.error(error)
         return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content="Unable to check if Stakeholder Credential is revoked")
 
-    # Revoke Stakeholder Credential
+    # Revoke Stakeholder Credential & update Catalog
     try:
         mongo_setup_admin.stakeholder_col.find_one_and_update({"stakeholderClaim.stakeholderDID": subscriber["stakeholderClaim"]["stakeholderDID"], "id_token": subscriber["id_token"]}, {'$set': {"revoked": True}})
         resp_revoke = {
             "stakeholderDID": subscriber["stakeholderClaim"]["stakeholderDID"],
             "revoked": True
         }
+
+        # Update Catalog
+        worker = threading.Thread(target = utils.update_catalog, args=(subscriber["handler_url"].split("tmf-api")[0] + 'tmf-api/party/v4/organization',), daemon=True)
+        worker.start()
 
     except Exception as error:
         logger.error(error)

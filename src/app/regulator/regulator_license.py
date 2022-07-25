@@ -10,7 +10,7 @@ from app.db import mongo_setup_provider, mongo_setup_regulator
 from app.bootstrap import setup_issuer, setup_license_schema
 
 # classes
-from app.regulator.classes import ReqLicenseCred, State, ResolveLicense, StateQuery
+from app.regulator.classes import ReqLicenseCred, State, ResolveLicense, StateQuery, RevokeLicenseCred
 
 router = APIRouter(
     prefix="/regulator",
@@ -83,12 +83,14 @@ async def query_license_creds(state: set[StateQuery] = Query(...)):
     try:
         result_list = []
         for status in state:
-            if status == "approved":
+            if status == StateQuery.approved:
                 subscriber = mongo_setup_regulator.license_collection.find({"state" : State.license_issue, "revoked" : {"$exists" : False}}, {"_id": 0, "holder_request_id":0, "service_endpoint": 0})
-            elif status == "pending":
+            elif status == StateQuery.pending:
                 subscriber = mongo_setup_regulator.license_collection.find({"state" : State.license_request, "revoked" : {"$exists" : False}}, {"_id": 0, "holder_request_id":0, "service_endpoint": 0})
-            else:
+            elif status == StateQuery.rejected:
                 subscriber = mongo_setup_regulator.license_collection.find({"state" : State.license_decline, "revoked" : {"$exists" : False}}, {"_id": 0, "holder_request_id":0, "service_endpoint": 0})
+            else:
+                subscriber = mongo_setup_regulator.license_collection.find({"revoked" : {"$exists" : True}}, {"_id": 0, "holder_request_id":0, "service_endpoint": 0})
 
             for result_object in subscriber:
                 result_list.append(result_object)
@@ -199,3 +201,56 @@ async def resolve_pending_license_approval(response: Response, body: ResolveLice
     except Exception as error:
         logger.error(error)
         return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content="Unable to resolve pending Stakeholder License Credential for approval")
+
+@router.put("/license/revoke")
+async def revoke_license_credential(response: Response, body: RevokeLicenseCred):
+    # AUTH
+    try:
+        body_dict = body.dict()
+        subscriber = mongo_setup_provider.stakeholder_col.find_one({"id_token": body_dict["regulator_id_token"]}, {"_id":0})
+        if subscriber is not None:
+            if body_dict["regulator_id_token"] != subscriber["id_token"]:            
+                return JSONResponse(status_code=status.HTTP_401_UNAUTHORIZED, content="Invalid Regulator ID Token")
+            
+        else:
+            return JSONResponse(status_code=status.HTTP_401_UNAUTHORIZED, content="Invalid Regulator ID Token")
+
+    except Exception as error:
+        logger.error(error)
+        return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content="Unable to verify Regulator ID Token")
+    
+    # CHECK FOR REQUEST RECORD
+    try:
+        subscriber = mongo_setup_regulator.license_collection.find_one({"licenseDID": body_dict["license_did"]}, {"_id":0})
+        if subscriber == None:
+            return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content="License Credential doesn't exist in Database or hasn't been issued yet")
+
+    except Exception as error:
+        logger.error(error)
+        return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content="Unable to find License Credential to revoke")
+
+    # CHECK IF CRED IS ALREADY REVOKED
+    try:
+        if "revoked" in subscriber:
+            return JSONResponse(status_code=status.HTTP_409_CONFLICT, content="License Credential already revoked")
+
+    except Exception as error:
+        logger.error(error)
+        return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content="Unable to check if License Credential is revoked")
+
+    # Revoke Stakeholder Credential & update Catalog
+    try:
+        mongo_setup_regulator.license_collection.find_one_and_update({"licenseDID": subscriber["licenseDID"]}, {'$set': {"revoked": True}})
+        resp_revoke = {
+            "licenseDID": subscriber["licenseDID"],
+            "revoked": True
+        }
+
+    except Exception as error:
+        logger.error(error)
+        return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content="Unable to update and subscribe to response")
+
+    # NOTIFY HOLDER AGENT
+    requests.post(subscriber["service_endpoint"]+"/holder/update_license_revoked_state/"+str(subscriber["licenseDID"]), json=resp_revoke, timeout=60)
+    
+    return resp_revoke

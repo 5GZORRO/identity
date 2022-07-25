@@ -7,6 +7,7 @@ class StateQuery(str, Enum):
     pending = 'pending'
     approved = 'approved'
     rejected = 'rejected'
+    revoked = 'revoked'
 
 class State(str, Enum):
     license_request = 'Stakeholder License Registration Requested'
@@ -28,3 +29,7 @@ class ResolveLicense(BaseModel):
     id_token: str
     license_did: str
     approval: bool
+
+class RevokeLicenseCred(BaseModel):
+    regulator_id_token: str
+    license_did: str

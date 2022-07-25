@@ -7,6 +7,8 @@ from bson import ObjectId
 
 from app.db import mongo_setup_provider
 
+from app.holder import utils
+
 # classes
 from app.holder.classes import State
 
@@ -33,6 +35,17 @@ async def decline_license(request_id: str, response: Response):
         mongo_setup_provider.license_collection.find_one_and_update({'_id': ObjectId(request_id)}, {'$set': {"state": State.license_decline}}) # UPDATE REQUEST RECORD FROM MONGO
         subscriber = mongo_setup_provider.license_collection.find_one({"_id": ObjectId(request_id)}, {"_id": 0})
 
+    except Exception as error:
+        logger.error(error)
+        return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content="Unable to update Mongo record")
+
+@router.post("/update_license_revoked_state/{license_did}", include_in_schema=False)
+async def update_lic_revoked_state(license_did: str, body: dict, response: Response):
+    #UPDATE MONGO RECORD
+    try:
+        mongo_setup_provider.license_collection.find_one_and_update({"licenseDID": body["licenseDID"]}, {'$set': {"revoked": True}}) # UPDATE REQUEST RECORD FROM MONGO
+        subscriber = mongo_setup_provider.license_collection.find_one({"licenseDID": body["licenseDID"]}, {"_id": 0})
+        
     except Exception as error:
         logger.error(error)
         return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content="Unable to update Mongo record")
