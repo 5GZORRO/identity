@@ -7,6 +7,8 @@ from loguru import logger
 def holder_key_create():
     try:
         holder_url = os.environ["HOLDER_AGENT_URL"]
+        logger.info('--- Sending /wallet/did/create (holder-key):')
+
         resp = requests.post(holder_url+"/wallet/did/create", timeout=30)
         result = resp.json()
         #did = result["result"]["did"]

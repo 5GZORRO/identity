@@ -50,6 +50,8 @@ async def request_credential(response: Response, body: Offer):
     # PRIVATE DID
     try:
         holder_url = os.environ["HOLDER_AGENT_URL"]
+        logger.info('--- Sending /wallet/did/create (holder did):')
+
         resp = requests.post(holder_url+"/wallet/did/create", timeout=30)
         result = resp.json()
         did = result["result"]["did"]

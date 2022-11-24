@@ -163,6 +163,9 @@ async def resolve_pending_license_approval(response: Response, body: ResolveLice
                     }
                 }
 
+                logger.info('--- Sending /issue-credential/send (license):')
+                logger.info(issue_cred)
+
                 final_resp = requests.post(URL+"/issue-credential/send", data=json.dumps(issue_cred), headers=header, timeout=60)
                 cred_info = json.loads(final_resp.text)
 

@@ -91,6 +91,8 @@ async def verify_credential(response: Response, body: EncodedProof):
             }
         }
         URL = os.environ["ISSUER_AGENT_URL"]
+        logger.info('--- Sending /present-proof/send-request:')
+        logger.info(verify_object)
         resp = requests.post(URL+"/present-proof/send-request", data=json.dumps(verify_object), headers=header, timeout=60)
         verify_info = json.loads(resp.text)
         if verify_info["state"] == "request_sent":

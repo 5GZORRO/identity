@@ -41,6 +41,8 @@ async def register_license(response: Response, body: License):
     # PRIVATE DID
     try:
         holder_url = os.environ["HOLDER_AGENT_URL"]
+        logger.info('--- Sending /wallet/did/create (license):')
+
         resp = requests.post(holder_url+"/wallet/did/create", timeout=30)
         result = resp.json()
         did = result["result"]["did"]

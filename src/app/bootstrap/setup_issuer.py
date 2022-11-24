@@ -11,6 +11,8 @@ def issuer_connection(holder_agent_url):
     global connection_id
     try:
         URL = os.environ["ISSUER_AGENT_URL"]
+        logger.info('--- Sending /connections/create-invitation:')
+
         resp = requests.post(URL+"/connections/create-invitation", headers=header, timeout=30)
         body = resp.json()
         connection_id = body["connection_id"]
@@ -26,6 +28,9 @@ def issuer_connection(holder_agent_url):
     try:
         #URL_holder = os.environ["HOLDER_AGENT_URL"]
         #resp_accept = requests.post(URL_holder+"/connections/receive-invitation", data=conn_invite, headers=header, timeout=30)
+        logger.info('--- Sending /connections/receive-invitation:')
+        logger.info(conn_invite)
+
         resp_accept = requests.post(holder_agent_url+"/connections/receive-invitation", data=conn_invite, headers=header, timeout=30)
         body_accept = json.dumps(resp_accept.json(), indent = 4)
         logger.info("Accepted connection invitation:")

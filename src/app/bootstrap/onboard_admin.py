@@ -31,7 +31,7 @@ def onboard_administrator():
                             "distributionList": "Operator-a@mail.com"
                         }
                     },
-                    "stakeholderDID": ''.join(random.choices(string.ascii_uppercase + string.ascii_lowercase + string.digits, k=22))
+                    "stakeholderDID": os.environ["STAKEHOLDER_DID"] if "STAKEHOLDER_DID" in os.environ else ''.join(random.choices(string.ascii_uppercase + string.ascii_lowercase + string.digits, k=22))
                 },
                 "timestamp": str(int(time.time())),
                 "state": State.stakeholder_issue,

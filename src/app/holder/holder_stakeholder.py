@@ -42,16 +42,23 @@ async def register_stakeholder(response: Response, body: Stakeholder): #key: str
         return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content="Unable to check for active stakeholder credential")
 
     # PRIVATE DID
-    try:
-        holder_url = os.environ["HOLDER_AGENT_URL"]
-        resp = requests.post(holder_url+"/wallet/did/create", timeout=30)
-        result = resp.json()
-        did = result["result"]["did"]
-        #verkey = result["result"]["verkey"]
+    did = ""
+    holder_url = os.environ["HOLDER_AGENT_URL"]
 
-    except Exception as error:
-        logger.error(error)
-        return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content="Unable to create wallet DID")
+    if "STAKEHOLDER_DID" in os.environ:
+        did = os.environ["STAKEHOLDER_DID"]
+    else:
+        try:
+            logger.info('--- Sending /wallet/did/create (register_stakeholder):')
+
+            resp = requests.post(holder_url+"/wallet/did/create", timeout=30)
+            result = resp.json()
+            did = result["result"]["did"]
+            #verkey = result["result"]["verkey"]
+
+        except Exception as error:
+            logger.error(error)
+            return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content="Unable to create wallet DID")
 
     # STORE REQUEST ON MONGO
     try:

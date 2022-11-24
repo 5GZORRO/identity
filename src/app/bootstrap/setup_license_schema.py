@@ -19,6 +19,10 @@ def stake_license_cred_setup():
         }
         
         URL = os.environ["ISSUER_AGENT_URL"]
+
+        logger.info('--- Sending /schemas (license):')
+        logger.info(schema)
+
         resp = requests.post(URL+"/schemas", data=json.dumps(schema), headers=header, timeout=30)
         #print(resp.text)
         
@@ -35,7 +39,10 @@ def stake_license_cred_setup():
         "tag": "stake_license_cred",
         "schema_id": schema_id_value
         }
-        
+
+        logger.info('--- Sending /credential-definitions:')
+        logger.info(cred_definition)
+
         cred_def_resp = requests.post(URL+"/credential-definitions", data=json.dumps(cred_definition), headers=header, timeout=60)
         #print(cred_def_resp.text)
         cred_definition = json.loads(cred_def_resp.text)

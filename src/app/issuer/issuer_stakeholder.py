@@ -90,8 +90,11 @@ async def resolve_pending_stakeholder_approval(response: Response, body: Resolve
                         ]
                     }
                 }
+                logger.info('--- Sending /issue-credential/send:')
+                logger.info(issue_cred)
 
                 final_resp = requests.post(URL+"/issue-credential/send", data=json.dumps(issue_cred), headers=header, timeout=60)
+                logger.info(final_resp)
                 #print(final_resp.text)
                 cred_info = json.loads(final_resp.text)
                 id_token = cred_info["credential_exchange_id"]
@@ -123,7 +126,10 @@ async def resolve_pending_stakeholder_approval(response: Response, body: Resolve
                     return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content="Unable to update and subscribe to response")
 
                 # NOTIFY HOLDER AGENT
-                requests.post(subscriber["service_endpoint"]+"/holder/update_stakeholder_state/"+str(subscriber["holder_request_id"]), json=resp_cred, timeout=60)
+                logger.info('--- Sending /holder/update_stakeholder_state/:')
+                logger.info(resp_cred)
+                hd_resp = requests.post(subscriber["service_endpoint"]+"/holder/update_stakeholder_state/"+str(subscriber["holder_request_id"]), json=resp_cred, timeout=60)
+                logger.info(hd_resp)
 
                 return resp_cred
 
