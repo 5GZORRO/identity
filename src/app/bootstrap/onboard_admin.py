@@ -12,6 +12,7 @@ def onboard_administrator():
     try:
         subscriber = mongo_setup_provider.stakeholder_col.find_one({"stakeholderClaim.stakeholderRoles.0.role": "Administrator"})
         if subscriber is None:
+            admin_name = os.environ["STAKEHOLDER_NAME"] if "STAKEHOLDER_NAME" in os.environ else "Operator-a"
             # Onboard Admin
             admin_cred = {
                 "stakeholderClaim": {
@@ -23,12 +24,12 @@ def onboard_administrator():
                         }
                     ],
                     "stakeholderProfile": {
-                        "name": "Operator-a",
-                        "ledgerIdentity": "CN=OperatorA,OU=DLT,O=DLT,L=London,C=GB",
-                        "address": "Operator-a address",
+                        "name": admin_name,
+                        "ledgerIdentity": os.environ["STAKEHOLDER_IDENTITY"] if "STAKEHOLDER_IDENTITY" in os.environ else "CN=OperatorA,OU=DLT,O=DLT,L=London,C=GB",
+                        "address": admin_name + " address",
                         "notificationMethod": {
                             "notificationType": "EMAIL",
-                            "distributionList": "Operator-a@mail.com"
+                            "distributionList": admin_name + "@mail.com"
                         }
                     },
                     "stakeholderDID": os.environ["STAKEHOLDER_DID"] if "STAKEHOLDER_DID" in os.environ else ''.join(random.choices(string.ascii_uppercase + string.ascii_lowercase + string.digits, k=22))
